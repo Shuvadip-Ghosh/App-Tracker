@@ -5,11 +5,6 @@ from pywinauto.application import Application
 import json
 
 """
-chrome.exe
-msedge.exe
-launcher.exe (opera)
-firefox.exe
-
 brave.exe
 vivaldi.exe
 
@@ -45,24 +40,41 @@ def get_url(pid,appname):
 
     return url
 
-
-
 while True:
     try:
         pid,app_name = get_app_name()
-        if app_name != active_app:
-            if active_app !="":
+        if app_name in browsernames:
+            url = get_url(pid,app_name)
+            if active_url == "":
+                active_url == url
+            elif active_app not in browsernames:
+                end_time = datetime.datetime.now()
+                print(active_app)
+                print(str(end_time-start_time).split(".")[0])
+                active_app = app_name
+                start_time = datetime.datetime.now()
+            elif active_url != url:
+                end_time = datetime.datetime.now()
+                print(active_url)
+                print(str(end_time-start_time).split(".")[0])
+                start_time = datetime.datetime.now()
+            active_url = url
+
+        if app_name not in browsernames :
+            if active_app == "":
+                active_app = app_name
+            elif active_app in browsernames:
+                end_time = datetime.datetime.now()
+                print(active_url)
+                print(str(end_time-start_time).split(".")[0])
+                start_time = datetime.datetime.now()
+            elif active_app != app_name :
                 end_time = datetime.datetime.now()
                 print(active_app)
                 print(str(end_time-start_time).split(".")[0])
                 start_time = datetime.datetime.now()
             active_app = app_name
         
-        if any([x in app_name for x in browsernames]) :
-            url = get_url(pid,app_name)
-            if url != active_url:
-                print(url)
-                active_url = url
     except KeyboardInterrupt:
         break
     except:
