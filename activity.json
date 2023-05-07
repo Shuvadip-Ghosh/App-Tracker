@@ -1,48 +1,8 @@
 {
-    "activities":[
-        {
-            "name":"Code.exe",
-            "TimeEntries":[]
-        },
-        {
-            "name":"Spotify.exe",
-            "TimeEntries":[]
-        },
-        {
-            "name":"msedge.exe",
-            "TimeEntries":[
-                {
-                    "site":"",
-                    "duration":[]
-                }
-            ]
-        },
-        {
-            "name":"chrome.exe",
-            "TimeEntries":[
-                {
-                    "site":"",
-                    "duration":[]
-                }
-            ]
-        },
-        {
-            "name":"launcher.exe",
-            "TimeEntries":[
-                {
-                    "site":"",
-                    "duration":[]
-                }
-            ]
-        },
-        {
-            "name":"firefox.exe",
-            "TimeEntries":[
-                {
-                    "site":"",
-                    "duration":[]
-                }
-            ]
-        }
-    ]
+    "Code.exe": [],
+    "likegeeks.com": [],
+    "stackoverflow.com": [
+        "0:00:22"
+    ],
+    "Spotify.exe": []
 }
