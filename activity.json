@@ -1,8 +1,35 @@
 {
-    "Code.exe": [],
+    "Code.exe": [
+        "0:00:19",
+        "0:01:23"
+    ],
     "likegeeks.com": [],
     "stackoverflow.com": [
         "0:00:22"
     ],
-    "Spotify.exe": []
+    "Spotify.exe": [],
+    "windowsterminalthemes.dev": [
+        "0:00:22"
+    ],
+    "assess.byjus.com": [
+        "0:00:18"
+    ],
+    "learn.aakashdigital.com": [
+        "0:02:45",
+        "0:00:36"
+    ],
+    "mail.google.com": [
+        "0:00:27"
+    ],
+    "meet.google.com": [
+        "0:00:24"
+    ],
+    "www.youtube.com": [
+        "0:03:42",
+        "0:00:31",
+        "0:00:22"
+    ],
+    "github.com": [
+        "0:00:41"
+    ]
 }

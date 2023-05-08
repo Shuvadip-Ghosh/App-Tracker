@@ -29,7 +29,7 @@ def update_json(key,time):
     st = int(time.split(":")[2])
     if st > 10 :
         if key in tracked_before:
-            activities[key].append(time)
+            activities[key].insert(0,time)
         elif key not in tracked_before:
             tracked_before.append(key)
             activities.update({key:[time]})
