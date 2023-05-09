@@ -11,13 +11,13 @@ vivaldi.exe
 a_string = "chrome.exe something something"
 print(any([x in a_string for x in matches]))
 """
-
+fname = "dev.json"
 active_app = ""
 active_url = ""
 today_date = str(datetime.datetime.now()).split(" ")[0]
 start_time = datetime.datetime.now()
 
-jsonobj = open("activity.json","r")
+jsonobj = open(fname,"r")
 activities = json.load(jsonobj)
 jsonobj.close()
 tracked_before = []
@@ -25,22 +25,21 @@ if today_date in activities:
     for apps in activities[today_date]:
         tracked_before.append(apps)
 else:
-    activities.update({today_date:[]})
-
+    activities.update({today_date:{}})
 
 browsernames =["chrome.exe","msedge.exe","launcher.exe","firefox.exe"]
-unwanted = ["ONLINENT.EXE","SearchApp.exe"]
+unwanted = ["ONLINENT.EXE","SearchApp.exe","rundll32.exe","ShellExperienceHost.exe"]
 
 def update_json(key,start_time,end_time,time):
     st = int(time.split(":")[2])
-    if st > 3 and key not in unwanted and ".exe" in key:
+    if st > 3 and key not in unwanted and "." in key:
         if key in tracked_before:
             activities[today_date][key].insert(0,[str(start_time).split(".")[0],str(end_time).split(".")[0],time])
         elif key not in tracked_before:
             tracked_before.append(key)
             activities[today_date].update({key:[[str(start_time).split(".")[0],str(end_time).split(".")[0],time]]})
         
-        jsonwr = open("activity.json","w")
+        jsonwr = open(fname,"w")
         json.dump(activities,jsonwr,indent=4)
         jsonwr.close()
         print(key)
@@ -100,16 +99,14 @@ while True:
             elif active_app != app_name :
                 end_time = datetime.datetime.now()
                 update_json(active_app, end_time,start_time,str(end_time-start_time).split(".")[0])
-                print(active_app)
-                print(str(end_time-start_time).split(".")[0])
                 start_time = datetime.datetime.now()
             active_app = app_name
-            # print(app_name)
     except KeyboardInterrupt:
-        jsonwr = open("activity.json","w")
-        json.dump(activities,jsonwr,indent=4)
-        jsonwr.close()
+        end_time = datetime.datetime.now()
+        if active_app in browsernames:
+            update_json(active_url, end_time,start_time,str(end_time-start_time).split(".")[0])
+        else:
+            update_json(active_app, end_time,start_time,str(end_time-start_time).split(".")[0])
         break
-    except Exception as e:
-        print(e)
-        continue
+    except:
+        pass
