@@ -19,6 +19,7 @@ class Activity:
         self.active_url = ""
         self.today_date = str(datetime.datetime.now()).split(" ")[0]
         self.start_time = datetime.datetime.now()
+        
 
         jsonobj = open(self.fname,"r")
         self.activities = json.load(jsonobj)

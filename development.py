@@ -3,6 +3,8 @@ import win32process, win32gui
 import datetime
 from pywinauto.application import Application
 import json
+import customtkinter
+import threading
 
 """
 brave.exe
@@ -19,6 +21,7 @@ class Activity:
         self.active_url = ""
         self.today_date = str(datetime.datetime.now()).split(" ")[0]
         self.start_time = datetime.datetime.now()
+        self.gui_done = False
 
         jsonobj = open(self.fname,"r")
         self.activities = json.load(jsonobj)
@@ -32,6 +35,9 @@ class Activity:
 
         self.browsernames =["chrome.exe","msedge.exe","launcher.exe","firefox.exe"]
         self.unwanted = ["ONLINENT.EXE","SearchApp.exe","rundll32.exe","ShellExperienceHost.exe"]
+
+        gui_thread = threading.Thread(target=self.guiLoop)
+        gui_thread.start()
         self.activity()
 
     def update_json(self,key,end_time,start_time):
@@ -117,5 +123,16 @@ class Activity:
             except Exception as e:
                 # print(e)
                 pass
+
+    def guiLoop(self):
+        customtkinter.set_appearance_mode("system")
+        customtkinter.set_default_color_theme("dark-blue")
+        self.app = customtkinter.CTk()
+        self.app.geometry("1000x520")
+        # use a colour sceheme of dark-gold-white and if possible blue
+        # https://dribbble.com/shots/19514541-Activity-Tracking-Dashboardcan take this as a example
+
+        self.gui_done = True
+        self.app.mainloop()
 
 acti = Activity()
