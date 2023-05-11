@@ -5,6 +5,7 @@ from pywinauto.application import Application
 import json
 import customtkinter
 import threading
+from PIL import Image
 
 """
 brave.exe
@@ -36,9 +37,11 @@ class Activity:
         self.browsernames =["chrome.exe","msedge.exe","launcher.exe","firefox.exe"]
         self.unwanted = ["ONLINENT.EXE","SearchApp.exe","rundll32.exe","ShellExperienceHost.exe"]
 
+
         gui_thread = threading.Thread(target=self.guiLoop)
         gui_thread.start()
-        self.activity()
+        # self.activity()
+        # self.guiLoop()
 
     def update_json(self,key,end_time,start_time):
         time = str(end_time-start_time).split(".")[0]
@@ -90,6 +93,7 @@ class Activity:
                     if self.active_url == "":
                         self.active_url == url
                     elif self.active_app not in self.browsernames:
+                        print("here")
                         self.end_time = datetime.datetime.now()
                         self.update_json(self.active_app, self.end_time,self.start_time)
                         self.active_app = app_name
@@ -98,7 +102,7 @@ class Activity:
                         self.end_time = datetime.datetime.now()
                         self.update_json(self.active_url, self.end_time,self.start_time)
                         self.start_time = datetime.datetime.now()
-                    active_url = url
+                    self.active_url = url
                     # print(active_app)
 
                 if app_name not in self.browsernames :
@@ -123,16 +127,64 @@ class Activity:
             except Exception as e:
                 # print(e)
                 pass
+          
 
     def guiLoop(self):
         customtkinter.set_appearance_mode("system")
         customtkinter.set_default_color_theme("dark-blue")
-        self.app = customtkinter.CTk()
+        self.app = customtkinter.CTk(fg_color="#151515")
         self.app.geometry("1000x520")
         # use a colour sceheme of dark-gold-white and if possible blue
         # https://dribbble.com/shots/19514541-Activity-Tracking-Dashboardcan take this as a example
+        self.app.grid_columnconfigure((0,1,2), weight=1)
+        self.app.grid_rowconfigure(0, weight=1)
+        self.app.title("Tracked")
+
+        # ===================Frame Left=========================
+        self.frame_left = customtkinter.CTkFrame(master=self.app, width=200,height=520,fg_color="#363636")
+        self.frame_left.configure(corner_radius=20)
+        self.frame_left.grid(row=0, column=0,padx=15,pady=15,sticky="nsew")
+        # ===================Frame Center=========================
+        self.frame_center = customtkinter.CTkScrollableFrame(master=self.app, width=420,height=520,fg_color="#151515")
+        self.frame_center.configure(corner_radius=20)
+        self.frame_center.grid(row=0, column=1 ,padx=0,pady=10,sticky="nsew")
+
+        # ===================Frame Right=========================
+        self.frame_right = customtkinter.CTkScrollableFrame(master=self.app, width=300,height=520,fg_color="#363636")
+        self.frame_right.configure(corner_radius=20)
+        self.frame_right.grid(row=0, column=2,padx=15,pady=15,sticky="nsew")
+
+        # ===================Frame Left Components=========================
+        my_image = customtkinter.CTkImage(light_image=Image.open('images/logo.png'),
+                                   dark_image=Image.open('images/logo.png'),
+                                   size=(100,100)
+                                   )
+        self.logo = customtkinter.CTkLabel(self.frame_left,image=my_image,text="")
+        self.logo.grid(row=1,column=0,pady=10,padx=5,sticky="nsew")
+
+        self.overview = customtkinter.CTkButton(self.frame_left, text="Overview")
+        self.overview.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
+        self.overview.grid(row=2, column=0,pady=5,padx=5,sticky="nsew")
+
+        self.detailed = customtkinter.CTkButton(self.frame_left, text="Detailed")
+        self.detailed.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
+        self.detailed.grid(row=3, column=0,pady=5,padx=5,sticky="nsew")
+
+        self.settings = customtkinter.CTkButton(self.frame_left, text="Settings")
+        self.settings.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
+        self.settings.grid(row=4, column=0,pady=5,padx=5,sticky="nsew")
+
+        # ===================Frame Right Components=========================
+        self.heading = customtkinter.CTkLabel(self.frame_right,text="Activity Tracking",font=("Roboto",27),justify="left")
+        self.heading.grid(row=1,column=0,padx=5,sticky="nsew")
+
+        self.date_g = customtkinter.CTkLabel(self.frame_right,text=datetime.datetime.today().strftime("%A,%d %b"),font=("Roboto",13),anchor="w",justify="left")
+        self.date_g.grid(row=2,column=0,padx=5,sticky="nsew")
+        
+
 
         self.gui_done = True
+        self.overview_com = [self.overview,self.detailed]
         self.app.mainloop()
 
 acti = Activity()
