@@ -6,6 +6,7 @@ import json
 import customtkinter
 import threading
 from PIL import Image
+import time
 
 """
 brave.exe
@@ -42,13 +43,16 @@ class Activity:
 
         gui_thread = threading.Thread(target=self.guiLoop)
         gui_thread.start()
+
+        gui_time_th = threading.Thread(target=self.gui_time)
+        gui_time_th.start() 
         # self.activity()
         # self.guiLoop()
 
     def update_json(self,key,end_time,start_time):
         time = str(end_time-start_time).split(".")[0]
         st = int(time.split(":")[2])
-        if st > 3 and key not in self.unwanted and "." in key:
+        if st > 3 and key not in self.unwanted and "." in key and ".tmp" not in key:
             if key in self.tracked_before:
                 self.activities[self.today_date][key].insert(0,[str(start_time).split(".")[0],str(end_time).split(".")[0],time])
             elif key not in self.tracked_before:
@@ -129,7 +133,28 @@ class Activity:
             except Exception as e:
                 # print(e)
                 pass
-          
+    
+    def gui_time(self):
+        while self.gui_done:
+            self.tlist = []
+            tot = datetime.timedelta(seconds=0,hours=0,minutes=0)
+            for i in self.dates:
+                if i.strftime("%Y-%m-%d") in self.activities:
+                    time_tot= datetime.timedelta(seconds=0,hours=0,minutes=0)
+                    for g in self.activities[i.strftime("%Y-%m-%d")]:
+                        for f in self.activities[i.strftime("%Y-%m-%d")][g]:
+                            time_tot = time_tot+datetime.timedelta(hours=int(f[2].split(":")[0]),minutes=int(f[2].split(":")[1]),seconds=int(f[2].split(":")[2]))
+                    tot=tot+time_tot
+                    self.tlist.append(time_tot.seconds)
+                elif i.strftime("%Y-%m-%d") not in self.activities:
+                    self.tlist.append(0)
+
+            for j,m in enumerate(self.tlist):
+                eval(f"self.slider{j}").set(m/tot.seconds)
+            
+            time.sleep(600)
+            
+
 
     def guiLoop(self):
         customtkinter.set_appearance_mode("system")
@@ -189,7 +214,7 @@ class Activity:
         self.frame_week = customtkinter.CTkFrame(master=self.frame_right,fg_color="#1b1b1b")
         self.frame_week.grid(row=3, column=0,padx=0,pady=5,sticky="nsew")
 
-        self.frame_week_tot = customtkinter.CTkFrame(master=self.frame_right,fg_color="#232323")
+        self.frame_week_tot = customtkinter.CTkFrame(master=self.frame_right,corner_radius=20,fg_color="#232323")
         self.frame_week_tot.grid(row=4, column=0,padx=0,pady=5,sticky="nsew")
 
         self.tot_time = customtkinter.CTkLabel(self.frame_week_tot,image=customtkinter.CTkImage(light_image=Image.open('images/tot-time.png'),
@@ -205,19 +230,37 @@ class Activity:
                                     text=f"{self.dates[i-1].strftime('%a')}\n\n{self.dates[i-1].strftime('%d')}",
                                    font=("Roboto",15),anchor="center",justify="center",height=75,
                                    fg_color="#363636",corner_radius=10).grid(row=0,column=i-1,padx=4,pady=5,sticky="nsew")
-                self.slider_today = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,progress_color="white")
-                self.slider_today.grid(row=1, column=i-1,pady=5,padx=18,sticky="nsew")
             else:
                 customtkinter.CTkLabel(self.frame_week,
                                     text=f"{self.dates[i-1].strftime('%a')}\n\n{self.dates[i-1].strftime('%d')}",
                                    font=("Roboto",15),anchor="center",justify="center",height=75,
                                    corner_radius=0).grid(row=0,column=i-1,padx=8,pady=5,sticky="nsew")
-                self.slider = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,progress_color="white")
-                self.slider.grid(row=1, column=i-1,pady=5,padx=18,sticky="nsew")
-            
             customtkinter.CTkLabel(self.frame_week_tot,
-                                    text=f"{self.dates[i-1].strftime('%a')}",
-                                   font=("Roboto",14)).grid(row=2,column=i-1,padx=4,pady=5,sticky="nsew")
+                                text=f"{self.dates[i-1].strftime('%a')}",
+                                font=("Roboto",14)).grid(row=2,column=i-1,padx=4,pady=5,sticky="nsew")
+            
+        self.slider0 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
+                                                    progress_color="white")
+        self.slider0.grid(row=1, column=0,pady=5,padx=17,sticky="nsew")
+        self.slider1 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
+                                                    progress_color="white")
+        self.slider1.grid(row=1, column=1,pady=5,padx=17,sticky="nsew")
+        self.slider2 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
+                                                    progress_color="white")
+        self.slider2.grid(row=1, column=2,pady=5,padx=17,sticky="nsew")
+        self.slider3 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
+                                                    progress_color="white")
+        self.slider3.grid(row=1, column=3,pady=5,padx=17,sticky="nsew")
+        self.slider4 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
+                                                    progress_color="white")
+        self.slider4.grid(row=1, column=4,pady=5,padx=17,sticky="nsew")
+        self.slider5 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
+                                                    progress_color="white")
+        self.slider5.grid(row=1, column=5,pady=5,padx=17,sticky="nsew")
+        self.slider6 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
+                                                    progress_color="white")
+        self.slider6.grid(row=1, column=6,pady=5,padx=17,sticky="nsew")
+    
 
 
 
