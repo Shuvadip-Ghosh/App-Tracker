@@ -7,6 +7,7 @@ import customtkinter
 import threading
 from PIL import Image
 import time
+import os
 
 """
 brave.exe
@@ -42,9 +43,10 @@ class Activity:
 
 
         gui_thread = threading.Thread(target=self.guiLoop)
-        gui_thread.start()
+        gui_time_th = threading.Thread(target=self.gui_time,daemon=True)
 
-        gui_time_th = threading.Thread(target=self.gui_time)
+        gui_thread.start()
+        time.sleep(1)
         gui_time_th.start() 
         # self.activity()
         # self.guiLoop()
@@ -149,6 +151,19 @@ class Activity:
                 elif i.strftime("%Y-%m-%d") not in self.activities:
                     self.tlist.append(0)
 
+            t = datetime.timedelta(seconds=0,hours=0,minutes=0)
+            for s in self.activities:
+                for g in self.activities[s]:
+                    for f in self.activities[s][g]:
+                        t = t+datetime.timedelta(hours=int(f[2].split(":")[0]),minutes=int(f[2].split(":")[1]),seconds=int(f[2].split(":")[2]))
+            self.tot_time_all.configure(text=f"{str(t).split(':')[0]}h {str(t).split(':')[1]}m")
+
+
+            handm = str(datetime.timedelta(seconds=tot.seconds)).split(":")
+            self.tot_time.configure(text=f"{handm[0]}h {handm[1]}m")
+
+
+
             for j,m in enumerate(self.tlist):
                 eval(f"self.slider{j}").set(m/tot.seconds)
             
@@ -173,12 +188,14 @@ class Activity:
         self.frame_left.grid(row=0, column=0,padx=15,sticky="nsew")
         # ===================Frame Center=========================
         self.frame_center = customtkinter.CTkScrollableFrame(master=self.app, width=420,height=520,fg_color="#101014")
-        self.frame_center.configure(corner_radius=20)
+        self.frame_center.configure(corner_radius=20,
+                                    scrollbar_button_color=("white","#101014"),scrollbar_button_hover_color=("white","#101014"))
         self.frame_center.grid(row=0, column=1 ,padx=0,pady=10,sticky="nsew")
 
         # ===================Frame Right=========================
         self.frame_right = customtkinter.CTkScrollableFrame(master=self.app, width=300,height=520,fg_color="#1b1b1b")
-        self.frame_right.configure(corner_radius=20)
+        self.frame_right.configure(corner_radius=20,
+                                   scrollbar_button_color=("white","#1b1b1b"),scrollbar_button_hover_color=("white","#1b1b1b"))
         self.frame_right.grid(row=0, column=2,padx=15,pady=15,sticky="nsew")
 
         # ===================Frame Left Components=========================
@@ -205,7 +222,9 @@ class Activity:
         
 
         # ===================Frame Right Components=========================
-        self.heading = customtkinter.CTkLabel(self.frame_right,text="Activity Tracking",font=("Roboto",27),justify="left",anchor="w")
+        self.heading = customtkinter.CTkLabel(self.frame_right,text="Activity Tracking",
+                                              font=customtkinter.CTkFont(family="Roboto", size=27,weight="bold"),
+                                              justify="left",anchor="w")
         self.heading.grid(row=1,column=0,padx=2,sticky="nsew")
 
         self.date_g = customtkinter.CTkLabel(self.frame_right,text=datetime.datetime.today().strftime("%A,%d %b"),font=("Roboto",13),anchor="w",justify="left")
@@ -217,12 +236,16 @@ class Activity:
         self.frame_week_tot = customtkinter.CTkFrame(master=self.frame_right,corner_radius=20,fg_color="#232323")
         self.frame_week_tot.grid(row=4, column=0,padx=0,pady=5,sticky="nsew")
 
-        self.tot_time = customtkinter.CTkLabel(self.frame_week_tot,image=customtkinter.CTkImage(light_image=Image.open('images/tot-time.png'),
+        self.tm = customtkinter.CTkLabel(self.frame_week_tot,image=customtkinter.CTkImage(light_image=Image.open('images/tot-time.png'),
                                    dark_image=Image.open('images/tot-time.png'),
                                    size=(12,12)
                                    ),compound="left",
                                     text="   Total Time",font=("Roboto",14),justify="left",anchor="w")
-        self.tot_time.grid(row=0,column=0,padx=15,pady=10,columnspan=3,sticky="nsew")
+        self.tm.grid(row=0,column=0,padx=15,pady=5,columnspan=3,sticky="nsew")
+
+        self.tot_time = customtkinter.CTkLabel(self.frame_week_tot,text="",height=10,
+                                               font=customtkinter.CTkFont(family="Roboto", size=17,weight="bold"))
+        self.tot_time.grid(row=1,column=0,padx=5,pady=5,columnspan=3,sticky="nsew")
 
         for i in range(1,8):
             if self.dates[i-1] == self.start_time:
@@ -237,31 +260,47 @@ class Activity:
                                    corner_radius=0).grid(row=0,column=i-1,padx=8,pady=5,sticky="nsew")
             customtkinter.CTkLabel(self.frame_week_tot,
                                 text=f"{self.dates[i-1].strftime('%a')}",
-                                font=("Roboto",14)).grid(row=2,column=i-1,padx=4,pady=5,sticky="nsew")
+                                font=("Roboto",13)).grid(row=3,column=i-1,padx=4,pady=5,sticky="nsew")
             
         self.slider0 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
                                                     progress_color="white")
-        self.slider0.grid(row=1, column=0,pady=5,padx=17,sticky="nsew")
+        self.slider0.grid(row=2, column=0,pady=5,padx=17,sticky="nsew")
         self.slider1 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
                                                     progress_color="white")
-        self.slider1.grid(row=1, column=1,pady=5,padx=17,sticky="nsew")
+        self.slider1.grid(row=2, column=1,pady=5,padx=17,sticky="nsew")
         self.slider2 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
                                                     progress_color="white")
-        self.slider2.grid(row=1, column=2,pady=5,padx=17,sticky="nsew")
+        self.slider2.grid(row=2, column=2,pady=5,padx=17,sticky="nsew")
         self.slider3 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
                                                     progress_color="white")
-        self.slider3.grid(row=1, column=3,pady=5,padx=17,sticky="nsew")
+        self.slider3.grid(row=2, column=3,pady=5,padx=17,sticky="nsew")
         self.slider4 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
                                                     progress_color="white")
-        self.slider4.grid(row=1, column=4,pady=5,padx=17,sticky="nsew")
+        self.slider4.grid(row=2, column=4,pady=5,padx=17,sticky="nsew")
         self.slider5 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
                                                     progress_color="white")
-        self.slider5.grid(row=1, column=5,pady=5,padx=17,sticky="nsew")
+        self.slider5.grid(row=2, column=5,pady=5,padx=17,sticky="nsew")
         self.slider6 = customtkinter.CTkProgressBar(self.frame_week_tot, orientation="vertical",height=70,
                                                     progress_color="white")
-        self.slider6.grid(row=1, column=6,pady=5,padx=17,sticky="nsew")
-    
+        self.slider6.grid(row=2, column=6,pady=5,padx=17,sticky="nsew")
 
+
+        self.frame_week_all = customtkinter.CTkFrame(master=self.frame_right,corner_radius=20,fg_color="#252525")
+        self.frame_week_all.grid(row=5, column=0,padx=0,pady=5,sticky="nsew")    
+
+        self.ta = customtkinter.CTkLabel(self.frame_week_all,image=customtkinter.CTkImage(light_image=Image.open('images/tot-time.png'),
+                                   dark_image=Image.open('images/tot-time.png'),
+                                   size=(12,12)
+                                   ),compound="left",height=28,
+                                    text="   All time usage",font=("Roboto",14),justify="left",anchor="w")
+        self.ta.grid(row=0,column=0,padx=15,pady=10,columnspan=3,sticky="nsew")
+
+
+        self.tot_time_all = customtkinter.CTkLabel(self.frame_week_all,text="",height=10,
+                                               font=customtkinter.CTkFont(family="Roboto", size=17,weight="bold"))
+        self.tot_time_all.grid(row=1,column=0,padx=5,pady=10,columnspan=3,sticky="nsew")
+
+        # next add the battery percentage if laptop or add the average time spent on an app 
 
 
 
