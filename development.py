@@ -168,7 +168,45 @@ class Activity:
                 eval(f"self.slider{j}").set(m/tot.seconds)
             
             time.sleep(600)
-            
+    
+    def gui_create_sidebar(self):
+        # ===================Frame Left=========================
+        self.frame_left = customtkinter.CTkFrame(master=self.app,width=100,height=520,fg_color="#1b1b1b")
+        self.frame_left.configure(corner_radius=20)
+        self.frame_left.grid(row=0, column=0,padx=0,pady=15,sticky="nsw")
+
+        # ===================Frame Left Components=========================
+        my_image = customtkinter.CTkImage(light_image=Image.open('images/logo.png'),
+                                   dark_image=Image.open('images/logo.png'),
+                                   size=(100,100)
+                                   )
+        cross = customtkinter.CTkImage(light_image=Image.open('images/close.png'),
+                                   dark_image=Image.open('images/close.png'),
+                                   size=(20,20)
+                                   )
+        self.tr = customtkinter.CTkLabel(self.frame_left,text="",width=190)
+        self.tr.grid(row=0,column=0,pady=0,padx=0,sticky="nsew")
+
+        self.close = customtkinter.CTkButton(self.frame_left,image=cross,text="",width=0,height=5,fg_color="#1b1b1b",
+                                             hover=False,command=lambda: self.frame_left.destroy())
+        self.close.grid(row=0,column=1,pady=0,padx=0,sticky="nsew")
+
+        self.logo = customtkinter.CTkLabel(self.frame_left,image=my_image,text="")
+        self.logo.grid(row=1,column=0,pady=10,padx=5,sticky="nsew",columnspan=2)
+
+
+        self.home = customtkinter.CTkButton(self.frame_left, text="Home")
+        self.home.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center",width=200)
+        self.home.grid(row=2, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
+
+        self.detailed = customtkinter.CTkButton(self.frame_left, text="Detailed")
+        self.detailed.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
+        self.detailed.grid(row=3, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
+
+        self.settings = customtkinter.CTkButton(self.frame_left, text="Settings")
+        self.settings.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
+        self.settings.grid(row=4, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
+
 
 
     def guiLoop(self):
@@ -176,50 +214,42 @@ class Activity:
         customtkinter.set_default_color_theme("dark-blue")
         self.app = customtkinter.CTk(fg_color="#101014")
         self.app.geometry("1000x520")
-        # use a colour sceheme of dark-gold-white and if possible blue
         # https://dribbble.com/shots/19514541-Activity-Tracking-Dashboardcan take this as a example
         self.app.grid_columnconfigure((0,1,2), weight=1)
         self.app.grid_rowconfigure(0, weight=1)
         self.app.title("Tracked")
+        self.app.resizable(False,False)
 
-        # ===================Frame Left=========================
-        self.frame_left = customtkinter.CTkFrame(master=self.app, width=200,height=520,fg_color="#1b1b1b")
-        self.frame_left.configure(corner_radius=20)
-        self.frame_left.grid(row=0, column=0,padx=15,sticky="nsew")
+        
         # ===================Frame Center=========================
         self.frame_center = customtkinter.CTkScrollableFrame(master=self.app, width=420,height=520,fg_color="#101014")
         self.frame_center.configure(corner_radius=20,
                                     scrollbar_button_color=("white","#101014"),scrollbar_button_hover_color=("white","#101014"))
-        self.frame_center.grid(row=0, column=1 ,padx=0,pady=10,sticky="nsew")
+        self.frame_center.grid(row=0, column=0 ,padx=15,pady=15,columnspan=2,sticky="nsew")
 
         # ===================Frame Right=========================
-        self.frame_right = customtkinter.CTkScrollableFrame(master=self.app, width=300,height=520,fg_color="#1b1b1b")
+        self.frame_right = customtkinter.CTkScrollableFrame(master=self.app, width=215,height=520,fg_color="#1b1b1b")
         self.frame_right.configure(corner_radius=20,
                                    scrollbar_button_color=("white","#1b1b1b"),scrollbar_button_hover_color=("white","#1b1b1b"))
         self.frame_right.grid(row=0, column=2,padx=15,pady=15,sticky="nsew")
 
-        # ===================Frame Left Components=========================
-        my_image = customtkinter.CTkImage(light_image=Image.open('images/logo.png'),
-                                   dark_image=Image.open('images/logo.png'),
-                                   size=(100,100)
-                                   )
-        self.logo = customtkinter.CTkLabel(self.frame_left,image=my_image,text="")
-        self.logo.grid(row=1,column=0,pady=10,padx=5,sticky="nsew")
-
-        self.home = customtkinter.CTkButton(self.frame_left, text="Home")
-        self.home.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
-        self.home.grid(row=2, column=0,pady=5,padx=5,sticky="nsew")
-
-        self.detailed = customtkinter.CTkButton(self.frame_left, text="Detailed")
-        self.detailed.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
-        self.detailed.grid(row=3, column=0,pady=5,padx=5,sticky="nsew")
-
-        self.settings = customtkinter.CTkButton(self.frame_left, text="Settings")
-        self.settings.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
-        self.settings.grid(row=4, column=0,pady=5,padx=5,sticky="nsew")
-
         # ===================Frame Center Components=========================
-        
+
+        self.navbar= customtkinter.CTkFrame(self.frame_center,width=420,height=40,fg_color="#1b1b1b")
+        self.navbar.grid(row=0,column=0,pady=0,padx=0,sticky="nsew")
+
+        self.open = customtkinter.CTkButton(self.navbar,
+                                    image=customtkinter.CTkImage(light_image=Image.open('images/open-menu.png'),
+                                   dark_image=Image.open('images/open-menu.png'),size=(30,30)),
+                                   text="",command=lambda: self.gui_create_sidebar())
+        self.open.configure(fg_color="#1b1b1b", hover_color="gray5",width=40)
+        self.open.grid(row=0, column=0,pady=10,padx=10,sticky="nsew")
+
+        self.pc_name = customtkinter.CTkLabel(self.navbar,text="SHADOW",
+                                              font=customtkinter.CTkFont(family="Roboto", size=27,weight="bold"),
+                                              justify="left",anchor="w")
+        self.pc_name.grid(row=0,column=1,padx=10,pady=10,sticky="nsew")
+
 
         # ===================Frame Right Components=========================
         self.heading = customtkinter.CTkLabel(self.frame_right,text="Activity Tracking",
@@ -305,7 +335,6 @@ class Activity:
 
 
         self.gui_done = True
-        self.overview_com = [self.home,self.detailed]
         self.app.mainloop()
 
 acti = Activity()
