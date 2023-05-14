@@ -22,10 +22,15 @@ class Activity:
         self.fname = "dev.json"
         self.active_app = ""
         self.active_url = ""
+        self.active_frame = ""
+        self.guiframes = {
+            "home":"self.home",
+            "details":"self.details",
+            "settings":"self.settings"
+        }
         self.today_date = str(datetime.datetime.now()).split(" ")[0]
         self.start_time = datetime.datetime.now()
         self.dates = [self.start_time + datetime.timedelta(days=i) for i in range(0 - self.start_time.weekday(), 7 - self.start_time.weekday())]
-        # print(dates[6].strftime("%d"))
         self.gui_done = False
 
         jsonobj = open(self.fname,"r")
@@ -48,8 +53,8 @@ class Activity:
         gui_thread.start()
         time.sleep(1)
         gui_time_th.start() 
+        self.active_frame = self.guiframes["home"]
         # self.activity()
-        # self.guiLoop()
 
     def update_json(self,key,end_time,start_time):
         time = str(end_time-start_time).split(".")[0]
@@ -194,19 +199,98 @@ class Activity:
         self.logo.grid(row=1,column=0,pady=10,padx=5,sticky="nsew",columnspan=2)
 
 
-        self.home = customtkinter.CTkButton(self.frame_left, text="Home")
-        self.home.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center",width=200)
-        self.home.grid(row=2, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
+        self.home_nav = customtkinter.CTkButton(self.frame_left, text="Home",command=lambda: self.gui_home())
+        self.home_nav.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center",width=200)
+        self.home_nav.grid(row=2, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
 
-        self.detailed = customtkinter.CTkButton(self.frame_left, text="Detailed")
+        self.detailed = customtkinter.CTkButton(self.frame_left, text="Detailed",command=lambda: self.gui_details())
         self.detailed.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
         self.detailed.grid(row=3, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
 
-        self.settings = customtkinter.CTkButton(self.frame_left, text="Settings")
-        self.settings.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
-        self.settings.grid(row=4, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
+        self.settings_nav = customtkinter.CTkButton(self.frame_left, text="Settings",command=lambda: self.gui_settings())
+        self.settings_nav.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
+        self.settings_nav.grid(row=4, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
+
+    def gui_home(self):
+        if self.active_frame != self.guiframes["home"]:
+            self.home = customtkinter.CTkFrame(self.frame_center,width=570,fg_color="#101014")
+            self.home.grid(row=1,column=0,padx=0,pady=0,sticky="nsew")
+
+            try:
+                eval(self.active_frame).destroy()
+                self.active_frame = self.guiframes["home"]
+            except:
+                pass
+        
+    def gui_details(self):
+        # ===================Frame Center (Details) Components=========================
+        if self.active_frame != self.guiframes["details"]:
+            self.details = customtkinter.CTkFrame(self.frame_center,width=570,fg_color="#101014")
+            self.details.grid(row=1,column=0,padx=0,pady=0,sticky="nsew")
+
+            eval(self.active_frame).destroy()
+            self.active_frame = self.guiframes["details"]
+
+    def gui_settings(self):
+        # ===================Frame Center (Settings) Components=========================
+        if self.active_frame != self.guiframes["settings"]:
+            self.settings = customtkinter.CTkFrame(self.frame_center,width=570,fg_color="#101014")
+            self.settings.grid(row=1,column=0,padx=0,pady=0,sticky="nsew")
+
+            self.general= customtkinter.CTkFrame(self.settings,width=570,height=165,fg_color="#1b1b1b",corner_radius=20)
+            self.general.grid(row=0,column=0,pady=0,padx=0,sticky="nsew")
+            self.general.grid_propagate(0)
+            
+            self.generalh = customtkinter.CTkLabel(self.general,text="General",
+                                                font=customtkinter.CTkFont(family="Roboto", size=27,weight="normal"),
+                                                justify="left",anchor="w",width=450)
+            self.generalh.grid(row=0,column=0,padx=(15,0),pady=(17,0),columnspan=1)
+            
+            self.min_winl = customtkinter.CTkLabel(self.general,text="Minimise Window (Instead of closing the application)",
+                                                font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
+                                                justify="left",anchor="w",width=450)
+            self.min_winl.grid(row=1,column=0,padx=(15,10),pady=(17,0))
+
+            self.min_win =  customtkinter.CTkSwitch(self.general, text="", onvalue="on", offvalue="off")
+            self.min_win.grid(row=1,column=1,padx=(15,0),pady=(17,0))
+
+            self.updatea = customtkinter.CTkLabel(self.general,text="Update",
+                                                font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
+                                                justify="left",anchor="w",width=450)
+            self.updatea.grid(row=2,column=0,padx=(15,0),pady=(17,0))
+
+            self.check = customtkinter.CTkButton(self.general, text="CHECK")
+            self.check.configure(font=("Roboto",16), hover=False,anchor="center",width=50)
+            self.check.grid(row=2, column=1,padx=(0,10),pady=(17,0))
 
 
+            self.startup= customtkinter.CTkFrame(self.settings,width=570,height=165,fg_color="#1b1b1b",corner_radius=20)
+            self.startup.grid(row=1,column=0,pady=(10,0),padx=0,sticky="nsew")
+            self.startup.grid_propagate(0)
+            
+            self.startuph = customtkinter.CTkLabel(self.startup,text="Startup",
+                                                font=customtkinter.CTkFont(family="Roboto", size=27,weight="normal"),
+                                                justify="left",anchor="w",width=450)
+            self.startuph.grid(row=0,column=0,padx=(15,0),pady=(17,0),columnspan=1)
+            
+            self.launchl = customtkinter.CTkLabel(self.startup,text="Launch On computer startup",
+                                                font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
+                                                justify="left",anchor="w",width=450)
+            self.launchl.grid(row=1,column=0,padx=(15,10),pady=(17,0))
+
+            self.launch =  customtkinter.CTkSwitch(self.startup, text="", onvalue="on", offvalue="off")
+            self.launch.grid(row=1,column=1,padx=(15,0),pady=(17,0))
+
+            self.startminl = customtkinter.CTkLabel(self.startup,text="Start minimised",
+                                                font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
+                                                justify="left",anchor="w",width=450)
+            self.startminl.grid(row=2,column=0,padx=(15,10),pady=(17,0))
+
+            self.startmin =  customtkinter.CTkSwitch(self.startup, text="", onvalue="on", offvalue="off")
+            self.startmin.grid(row=2,column=1,padx=(15,0),pady=(17,0))
+
+            eval(self.active_frame).destroy()
+            self.active_frame = self.guiframes["settings"]
 
     def guiLoop(self):
         customtkinter.set_appearance_mode("system")
@@ -232,11 +316,11 @@ class Activity:
                                    scrollbar_button_color=("white","#1b1b1b"),scrollbar_button_hover_color=("white","#1b1b1b"))
         self.frame_right.grid(row=0, column=2,padx=15,pady=15,sticky="nsew")
 
-        # ===================Frame Center (Home) Components=========================
+        # ===================Frame Center (All Frame) Components=========================
 
         self.navbar= customtkinter.CTkFrame(self.frame_center,width=570,height=53,fg_color="#1b1b1b",corner_radius=20)
-        # self.navbar.grid(row=0,column=0,pady=0,padx=0,sticky="nsew")
-        # self.navbar.pack_propagate(0)
+        self.navbar.grid(row=0,column=0,pady=(0,10),padx=(0,0),sticky="nsew")
+        self.navbar.pack_propagate(0)
 
         self.open = customtkinter.CTkButton(self.navbar,
                                     image=customtkinter.CTkImage(light_image=Image.open('images/open-menu.png'),
@@ -244,69 +328,13 @@ class Activity:
                                    text="",command=lambda: self.gui_create_sidebar())
         self.open.configure(fg_color="#1b1b1b", hover_color="gray5",width=40)
         self.open.pack(side="left",pady=10,padx=10)
-        # self.open.grid(row=0, column=0,pady=10,padx=10,sticky="nsew")
 
         self.pc_name = customtkinter.CTkLabel(self.navbar,text=os.environ['COMPUTERNAME'],
                                               font=customtkinter.CTkFont(family="Roboto", size=20,weight="bold"))
         self.pc_name.pack(side="right",pady=10,padx=17)
-        # self.pc_name.grid(row=0,column=1,padx=(393,10),pady=10,sticky="e")
 
-
-        # ===================Frame Center (Details) Components=========================
-
-
-        # ===================Frame Center (Settings) Components=========================
-        self.general= customtkinter.CTkFrame(self.frame_center,width=570,height=165,fg_color="#1b1b1b",corner_radius=20)
-        self.general.grid(row=0,column=0,pady=0,padx=0,sticky="nsew")
-        self.general.grid_propagate(0)
+        self.gui_home()
         
-        self.generalh = customtkinter.CTkLabel(self.general,text="General",
-                                              font=customtkinter.CTkFont(family="Roboto", size=27,weight="normal"),
-                                              justify="left",anchor="w",width=450)
-        self.generalh.grid(row=0,column=0,padx=(15,0),pady=(17,0),columnspan=1)
-        
-        self.min_winl = customtkinter.CTkLabel(self.general,text="Minimise Window (Instead of closing the application)",
-                                              font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
-                                              justify="left",anchor="w",width=450)
-        self.min_winl.grid(row=1,column=0,padx=(15,10),pady=(17,0))
-
-        self.min_win =  customtkinter.CTkSwitch(self.general, text="", onvalue="on", offvalue="off")
-        self.min_win.grid(row=1,column=1,padx=(15,0),pady=(17,0))
-
-        self.updatea = customtkinter.CTkLabel(self.general,text="Update",
-                                              font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
-                                              justify="left",anchor="w",width=450)
-        self.updatea.grid(row=2,column=0,padx=(15,0),pady=(17,0))
-
-        self.check = customtkinter.CTkButton(self.general, text="CHECK")
-        self.check.configure(font=("Roboto",16), hover=False,anchor="center",width=50)
-        self.check.grid(row=2, column=1,padx=(0,10),pady=(17,0))
-
-
-        self.startup= customtkinter.CTkFrame(self.frame_center,width=570,height=165,fg_color="#1b1b1b",corner_radius=20)
-        self.startup.grid(row=1,column=0,pady=(10,0),padx=0,sticky="nsew")
-        self.startup.grid_propagate(0)
-        
-        self.startuph = customtkinter.CTkLabel(self.startup,text="Startup",
-                                              font=customtkinter.CTkFont(family="Roboto", size=27,weight="normal"),
-                                              justify="left",anchor="w",width=450)
-        self.startuph.grid(row=0,column=0,padx=(15,0),pady=(17,0),columnspan=1)
-        
-        self.launchl = customtkinter.CTkLabel(self.startup,text="Launch On computer startup",
-                                              font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
-                                              justify="left",anchor="w",width=450)
-        self.launchl.grid(row=1,column=0,padx=(15,10),pady=(17,0))
-
-        self.launch =  customtkinter.CTkSwitch(self.startup, text="", onvalue="on", offvalue="off")
-        self.launch.grid(row=1,column=1,padx=(15,0),pady=(17,0))
-
-        self.startminl = customtkinter.CTkLabel(self.startup,text="Start minimised",
-                                              font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
-                                              justify="left",anchor="w",width=450)
-        self.startminl.grid(row=2,column=0,padx=(15,10),pady=(17,0))
-
-        self.startmin =  customtkinter.CTkSwitch(self.startup, text="", onvalue="on", offvalue="off")
-        self.startmin.grid(row=2,column=1,padx=(15,0),pady=(17,0))
 
 
         # ===================Frame Right Components=========================
