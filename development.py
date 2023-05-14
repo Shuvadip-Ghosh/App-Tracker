@@ -48,7 +48,7 @@ class Activity:
         gui_thread.start()
         time.sleep(1)
         gui_time_th.start() 
-        # self.activity()
+        self.activity()
         # self.guiLoop()
 
     def update_json(self,key,end_time,start_time):
@@ -101,7 +101,6 @@ class Activity:
                     if self.active_url == "":
                         self.active_url == url
                     elif self.active_app not in self.browsernames:
-                        print("here")
                         self.end_time = datetime.datetime.now()
                         self.update_json(self.active_app, self.end_time,self.start_time)
                         self.active_app = app_name
@@ -233,22 +232,32 @@ class Activity:
                                    scrollbar_button_color=("white","#1b1b1b"),scrollbar_button_hover_color=("white","#1b1b1b"))
         self.frame_right.grid(row=0, column=2,padx=15,pady=15,sticky="nsew")
 
-        # ===================Frame Center Components=========================
+        # ===================Frame Center (Home) Components=========================
 
-        self.navbar= customtkinter.CTkFrame(self.frame_center,width=420,height=40,fg_color="#1b1b1b")
+        self.navbar= customtkinter.CTkFrame(self.frame_center,width=570,height=53,fg_color="#1b1b1b",corner_radius=20)
+        # self.navbar.pack(side="top")
         self.navbar.grid(row=0,column=0,pady=0,padx=0,sticky="nsew")
+        self.navbar.pack_propagate(0)
+        # self.navbar.grid_propagate(0)
 
         self.open = customtkinter.CTkButton(self.navbar,
                                     image=customtkinter.CTkImage(light_image=Image.open('images/open-menu.png'),
-                                   dark_image=Image.open('images/open-menu.png'),size=(30,30)),
+                                   dark_image=Image.open('images/open-menu.png'),size=(25,25)),
                                    text="",command=lambda: self.gui_create_sidebar())
         self.open.configure(fg_color="#1b1b1b", hover_color="gray5",width=40)
-        self.open.grid(row=0, column=0,pady=10,padx=10,sticky="nsew")
+        self.open.pack(side="left",pady=10,padx=10)
+        # self.open.grid(row=0, column=0,pady=10,padx=10,sticky="nsew")
 
-        self.pc_name = customtkinter.CTkLabel(self.navbar,text="SHADOW",
-                                              font=customtkinter.CTkFont(family="Roboto", size=27,weight="bold"),
-                                              justify="left",anchor="w")
-        self.pc_name.grid(row=0,column=1,padx=10,pady=10,sticky="nsew")
+        self.pc_name = customtkinter.CTkLabel(self.navbar,text=os.environ['COMPUTERNAME'],
+                                              font=customtkinter.CTkFont(family="Roboto", size=20,weight="bold"))
+        self.pc_name.pack(side="right",pady=10,padx=17)
+        # self.pc_name.grid(row=0,column=1,padx=(393,10),pady=10,sticky="e")
+
+
+        # ===================Frame Center (Details) Components=========================
+
+
+        # ===================Frame Center (Settings) Components=========================
 
 
         # ===================Frame Right Components=========================
@@ -328,13 +337,14 @@ class Activity:
 
         self.tot_time_all = customtkinter.CTkLabel(self.frame_week_all,text="",height=10,
                                                font=customtkinter.CTkFont(family="Roboto", size=17,weight="bold"))
-        self.tot_time_all.grid(row=1,column=0,padx=5,pady=10,columnspan=3,sticky="nsew")
+        self.tot_time_all.grid(row=1,column=0,padx=5,pady=(0,22),columnspan=3,sticky="nsew")
 
         # next add the battery percentage if laptop or add the average time spent on an app 
 
 
 
         self.gui_done = True
+        # self.app.protocol('WM_DELETE_WINDOW', self.hide_window)
         self.app.mainloop()
 
 acti = Activity()
