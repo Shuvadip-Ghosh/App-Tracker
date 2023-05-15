@@ -14,22 +14,13 @@ jsonobj.close()
 # if str(dates[3]).split(" ")[0] in activities:
 #     print("Yes")
 
-tm = {}
+app= "Code.exe"
 t = datetime.timedelta(seconds=0,hours=0,minutes=0)
+time_tot= datetime.timedelta(seconds=0,hours=0,minutes=0)
 for s in activities:
-    for g in activities[s]:
-        time_tot= datetime.timedelta(seconds=0,hours=0,minutes=0)
-        for f in activities[s][g]:
+    if app in activities[s]:
+        for f in activities[s][app]:
             time_tot = time_tot+datetime.timedelta(hours=int(f[2].split(":")[0]),minutes=int(f[2].split(":")[1]),seconds=int(f[2].split(":")[2]))
-        if g in tm:
-            tm[g].append(time_tot)
-        else:
-            tm.update({g:[time_tot]})
-for a in tm:
-    tt= datetime.timedelta(seconds=0,hours=0,minutes=0)
-    for ts in tm[a]:
-        tt =tt+ts
-    tm[a] = tt
-tm = dict(sorted(tm.items(), key=lambda item: item[1]))
-tm = list(tm.items())
-print(tm)
+
+print(time_tot)
+

@@ -60,6 +60,7 @@ class Activity:
     def add_to_startup(self):
         # code to create shortcut using python and send it to the startup_folder
         startup_folder = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+
     def get_total_times(self):
         self.tm = {}
         t = datetime.timedelta(seconds=0,hours=0,minutes=0)
@@ -201,19 +202,17 @@ class Activity:
                 for g in self.activities[s]:
                     for f in self.activities[s][g]:
                         t = t+datetime.timedelta(hours=int(f[2].split(":")[0]),minutes=int(f[2].split(":")[1]),seconds=int(f[2].split(":")[2]))
-            self.tot_time_all.configure(text=f"{str(t).split(':')[0]}h {str(t).split(':')[1]}m")
-
-
-            handm = str(datetime.timedelta(seconds=tot.seconds)).split(":")
-            self.tot_time.configure(text=f"{handm[0]}h {handm[1]}m")
-
 
             try:
+                self.tot_time_all.configure(text=f"{str(t).split(':')[0]}h {str(t).split(':')[1]}m")
+                handm = str(datetime.timedelta(seconds=tot.seconds)).split(":")
+                self.tot_time.configure(text=f"{handm[0]}h {handm[1]}m")
                 for j,m in enumerate(self.tlist):
                     eval(f"self.slider{j}").set(m/tot.seconds)
             except:
-                for j,m in enumerate(self.tlist):
-                    eval(f"self.slider{j}").set(0)
+                if self.active_frame != self.guiframes["details"] or b == True:
+                    for j,m in enumerate(self.tlist):
+                        eval(f"self.slider{j}").set(0)
             if b:
                 break
             time.sleep(60)
@@ -258,20 +257,22 @@ class Activity:
 
     def gui_home(self):
         if self.active_frame != self.guiframes["home"]:
-            self.home = customtkinter.CTkFrame(self.frame_center,width=570,fg_color="#101014")
-            self.home.grid(row=1,column=0,padx=0,pady=0,sticky="nsew")
-
             try:
                 eval(self.active_frame).destroy()
-                self.page_name.configure(text="Home")
-                if self.active_frame == self.guiframes["details"]:
-                    self.gui_frame_right_home_settings()
+                self.frame_left.destroy()
             except :
                 pass
+            if self.active_frame == self.guiframes["details"]:
+                self.gui_frame_right_home_settings()
+            self.page_name.configure(text="Home")
             self.active_frame = self.guiframes["home"]
-        
+
+            self.home = customtkinter.CTkFrame(self.frame_center,width=570,fg_color="#101014")
+            self.home.grid(row=1,column=0,padx=0,pady=0,sticky="nsew")
+  
     def gui_details(self):
         # ===================Frame Center (Details) Components=========================
+        self.frame_left.destroy()
         if self.active_frame != self.guiframes["details"]:
             self.details = customtkinter.CTkFrame(self.frame_center,width=570,fg_color="#1b1b1b")
             self.details.grid(row=1,column=0,padx=0,pady=0,sticky="nsew")
@@ -292,8 +293,8 @@ class Activity:
                 self.con = customtkinter.CTkButton(self.details,
                                     image=customtkinter.CTkImage(light_image=Image.open('images/continue.png'),
                                    dark_image=Image.open('images/continue.png'),size=(25,25)),
-                                   text="")
-                self.con.configure(fg_color="#1b1b1b", hover_color="gray5",width=40)
+                                   text="",command=lambda app=app: self.gui_details_right_frame(app))
+                self.con.configure(fg_color="#1b1b1b", hover_color="#1b1b1b",width=40)
                 self.con.grid(row=i,column=2,padx=(15,0),pady=(9,8))
 
 
@@ -302,7 +303,17 @@ class Activity:
             self.frcontainer.destroy()
             self.active_frame = self.guiframes["details"]
 
+    def gui_details_right_frame(self,app):
+        self.frcontainerd = customtkinter.CTkFrame(master=self.frame_right,fg_color="#1b1b1b")
+        self.frcontainerd.grid(row=0, column=0,padx=0,pady=0,sticky="nsew")
+
+        self.app_name = customtkinter.CTkLabel(self.frcontainerd,text=app,
+                                              font=customtkinter.CTkFont(family="Roboto", size=20,weight="bold"),
+                                              justify="left",anchor="w",wraplength=290)
+        self.app_name.grid(row=1,column=0,padx=2,sticky="nsew")
+
     def gui_settings(self):
+        self.frame_left.destroy()
         # ===================Frame Center (Settings) Components=========================
         if self.active_frame != self.guiframes["settings"]:
             self.settings = customtkinter.CTkFrame(self.frame_center,width=570,fg_color="#101014")
@@ -358,7 +369,6 @@ class Activity:
 
             self.startmin =  customtkinter.CTkSwitch(self.startup, text="", onvalue="on", offvalue="off")
             self.startmin.grid(row=2,column=1,padx=(15,0),pady=(17,0))
-
 
             eval(self.active_frame).destroy()
             self.page_name.configure(text="Settings")
