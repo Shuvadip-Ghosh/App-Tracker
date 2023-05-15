@@ -47,38 +47,18 @@ class Activity:
         self.browsernames =["chrome.exe","msedge.exe","launcher.exe","firefox.exe"]
         self.unwanted = ["ONLINENT.EXE","SearchApp.exe","rundll32.exe","ShellExperienceHost.exe"]
 
-        self.get_total_times()
         self.gui_thread = threading.Thread(target=self.guiLoop)
-        self.gui_time_th = threading.Thread(target=self.gui_time,daemon=True)
+        gui_time_th = threading.Thread(target=self.gui_time,daemon=True)
 
         self.gui_thread.start()
         time.sleep(1)
-        self.gui_time_th.start() 
-        self.active_frame = self.guiframes["home"]
+        gui_time_th.start() 
+        self.active_frame = ""
         # self.activity()
     
     def add_to_startup(self):
         # code to create shortcut using python and send it to the startup_folder
         startup_folder = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
-    def get_total_times(self):
-        self.tm = {}
-        t = datetime.timedelta(seconds=0,hours=0,minutes=0)
-        for s in self.activities:
-            for g in self.activities[s]:
-                time_tot= datetime.timedelta(seconds=0,hours=0,minutes=0)
-                for f in self.activities[s][g]:
-                    time_tot = time_tot+datetime.timedelta(hours=int(f[2].split(":")[0]),minutes=int(f[2].split(":")[1]),seconds=int(f[2].split(":")[2]))
-                if g in self.tm:
-                    self.tm[g].append(time_tot)
-                else:
-                    self.tm.update({g:[time_tot]})
-        for a in self.tm:
-            tt= datetime.timedelta(seconds=0,hours=0,minutes=0)
-            for ts in self.tm[a]:
-                tt =tt+ts
-            self.tm[a] = tt
-        self.tm = dict(sorted(self.tm.items(), key=lambda item: item[1]))
-        self.total_time_per_app = list(self.tm.items())
 
     def get_total_times(self):
         self.tm = {}
@@ -214,9 +194,9 @@ class Activity:
             except:
                 for j,m in enumerate(self.tlist):
                     eval(f"self.slider{j}").set(0)
-            if b:
+            if b or not self.gui_thread.is_alive():
                 break
-            time.sleep(60)
+            time.sleep(600)
     
     def gui_create_sidebar(self):
         # ===================Frame Left=========================
@@ -263,11 +243,11 @@ class Activity:
 
             try:
                 eval(self.active_frame).destroy()
-                self.page_name.configure(text="Home")
                 if self.active_frame == self.guiframes["details"]:
                     self.gui_frame_right_home_settings()
             except :
                 pass
+            self.page_name.configure(text="Home")
             self.active_frame = self.guiframes["home"]
         
     def gui_details(self):
@@ -296,7 +276,6 @@ class Activity:
                 self.con.configure(fg_color="#1b1b1b", hover_color="gray5",width=40)
                 self.con.grid(row=i,column=2,padx=(15,0),pady=(9,8))
 
-
             eval(self.active_frame).destroy()
             self.page_name.configure(text="Details")
             self.frcontainer.destroy()
@@ -305,6 +284,7 @@ class Activity:
     def gui_settings(self):
         # ===================Frame Center (Settings) Components=========================
         if self.active_frame != self.guiframes["settings"]:
+            eval(self.active_frame).destroy()
             self.settings = customtkinter.CTkFrame(self.frame_center,width=570,fg_color="#101014")
             self.settings.grid(row=1,column=0,padx=0,pady=0,sticky="nsew")
 
@@ -360,7 +340,6 @@ class Activity:
             self.startmin.grid(row=2,column=1,padx=(15,0),pady=(17,0))
 
 
-            eval(self.active_frame).destroy()
             self.page_name.configure(text="Settings")
             if self.active_frame == self.guiframes["details"]:
                     self.gui_frame_right_home_settings()
