@@ -56,6 +56,26 @@ class Activity:
         self.active_frame = self.guiframes["home"]
         # self.activity()
 
+    def get_total_times(self):
+        self.tm = {}
+        t = datetime.timedelta(seconds=0,hours=0,minutes=0)
+        for s in self.activities:
+            for g in self.activities[s]:
+                time_tot= datetime.timedelta(seconds=0,hours=0,minutes=0)
+                for f in self.activities[s][g]:
+                    time_tot = time_tot+datetime.timedelta(hours=int(f[2].split(":")[0]),minutes=int(f[2].split(":")[1]),seconds=int(f[2].split(":")[2]))
+                if g in self.tm:
+                    self.tm[g].append(time_tot)
+                else:
+                    self.tm.update({g:[time_tot]})
+        for a in self.tm:
+            tt= datetime.timedelta(seconds=0,hours=0,minutes=0)
+            for ts in self.tm[a]:
+                tt =tt+ts
+            self.tm[a] = tt
+        self.tm = dict(sorted(self.tm.items(), key=lambda item: item[1]))
+        self.total_time_per_app = list(self.tm.items())
+
     def update_json(self,key,end_time,start_time):
         time = str(end_time-start_time).split(".")[0]
         st = int(time.split(":")[2])
@@ -98,7 +118,6 @@ class Activity:
     
     def activity(self):
         while True:
-            # print("here")
             try:
                 pid,app_name = self.get_app_name()
                 if app_name in self.browsernames:
@@ -115,7 +134,6 @@ class Activity:
                         self.update_json(self.active_url, self.end_time,self.start_time)
                         self.start_time = datetime.datetime.now()
                     self.active_url = url
-                    # print(active_app)
 
                 if app_name not in self.browsernames :
                     if self.active_app == "":
@@ -137,10 +155,9 @@ class Activity:
                     self.update_json(self.active_app, self.end_time,self.start_time)
                 break
             except Exception as e:
-                # print(e)
                 pass
     
-    def gui_time(self):
+    def gui_time(self, b=False):
         while self.gui_done:
             self.tlist = []
             tot = datetime.timedelta(seconds=0,hours=0,minutes=0)
@@ -167,10 +184,14 @@ class Activity:
             self.tot_time.configure(text=f"{handm[0]}h {handm[1]}m")
 
 
-
-            for j,m in enumerate(self.tlist):
-                eval(f"self.slider{j}").set(m/tot.seconds)
-            
+            try:
+                for j,m in enumerate(self.tlist):
+                    eval(f"self.slider{j}").set(m/tot.seconds)
+            except:
+                for j,m in enumerate(self.tlist):
+                    eval(f"self.slider{j}").set(0)
+            if b:
+                break
             time.sleep(600)
     
     def gui_create_sidebar(self):
@@ -203,7 +224,7 @@ class Activity:
         self.home_nav.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center",width=200)
         self.home_nav.grid(row=2, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
 
-        self.detailed = customtkinter.CTkButton(self.frame_left, text="Detailed",command=lambda: self.gui_details())
+        self.detailed = customtkinter.CTkButton(self.frame_left, text="Details",command=lambda: self.gui_details())
         self.detailed.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
         self.detailed.grid(row=3, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
 
@@ -218,8 +239,11 @@ class Activity:
 
             try:
                 eval(self.active_frame).destroy()
+                self.page_name.configure(text="Home")
+                if self.active_frame == self.guiframes["details"]:
+                    self.gui_frame_right_home_settings()
                 self.active_frame = self.guiframes["home"]
-            except:
+            except :
                 pass
         
     def gui_details(self):
@@ -229,6 +253,8 @@ class Activity:
             self.details.grid(row=1,column=0,padx=0,pady=0,sticky="nsew")
 
             eval(self.active_frame).destroy()
+            self.page_name.configure(text="Details")
+            self.frcontainer.destroy()
             self.active_frame = self.guiframes["details"]
 
     def gui_settings(self):
@@ -240,7 +266,7 @@ class Activity:
             self.general= customtkinter.CTkFrame(self.settings,width=570,height=165,fg_color="#1b1b1b",corner_radius=20)
             self.general.grid(row=0,column=0,pady=0,padx=0,sticky="nsew")
             self.general.grid_propagate(0)
-            
+            # ==================================================================================================================
             self.generalh = customtkinter.CTkLabel(self.general,text="General",
                                                 font=customtkinter.CTkFont(family="Roboto", size=27,weight="normal"),
                                                 justify="left",anchor="w",width=450)
@@ -253,7 +279,6 @@ class Activity:
 
             self.min_win =  customtkinter.CTkSwitch(self.general, text="", onvalue="on", offvalue="off")
             self.min_win.grid(row=1,column=1,padx=(15,0),pady=(17,0))
-
             self.updatea = customtkinter.CTkLabel(self.general,text="Update",
                                                 font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
                                                 justify="left",anchor="w",width=450)
@@ -263,7 +288,7 @@ class Activity:
             self.check.configure(font=("Roboto",16), hover=False,anchor="center",width=50)
             self.check.grid(row=2, column=1,padx=(0,10),pady=(17,0))
 
-
+            # ==================================================================================================================
             self.startup= customtkinter.CTkFrame(self.settings,width=570,height=165,fg_color="#1b1b1b",corner_radius=20)
             self.startup.grid(row=1,column=0,pady=(10,0),padx=0,sticky="nsew")
             self.startup.grid_propagate(0)
@@ -273,7 +298,7 @@ class Activity:
                                                 justify="left",anchor="w",width=450)
             self.startuph.grid(row=0,column=0,padx=(15,0),pady=(17,0),columnspan=1)
             
-            self.launchl = customtkinter.CTkLabel(self.startup,text="Launch On computer startup",
+            self.launchl = customtkinter.CTkLabel(self.startup,text="Launch on computer startup",
                                                 font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
                                                 justify="left",anchor="w",width=450)
             self.launchl.grid(row=1,column=0,padx=(15,10),pady=(17,0))
@@ -289,67 +314,30 @@ class Activity:
             self.startmin =  customtkinter.CTkSwitch(self.startup, text="", onvalue="on", offvalue="off")
             self.startmin.grid(row=2,column=1,padx=(15,0),pady=(17,0))
 
+
             eval(self.active_frame).destroy()
+            self.page_name.configure(text="Settings")
+            if self.active_frame == self.guiframes["details"]:
+                    self.gui_frame_right_home_settings()
             self.active_frame = self.guiframes["settings"]
 
-    def guiLoop(self):
-        customtkinter.set_appearance_mode("system")
-        customtkinter.set_default_color_theme("dark-blue")
-        self.app = customtkinter.CTk(fg_color="#101014")
-        self.app.geometry("1000x520")
-        # https://dribbble.com/shots/19514541-Activity-Tracking-Dashboardcan take this as a example
-        self.app.grid_columnconfigure((0,1,2), weight=1)
-        self.app.grid_rowconfigure(0, weight=1)
-        self.app.title("Tracked")
-        self.app.resizable(False,False)
-
-        
-        # ===================Frame Center=========================
-        self.frame_center = customtkinter.CTkScrollableFrame(master=self.app, width=420,height=520,fg_color="#101014")
-        self.frame_center.configure(corner_radius=20,
-                                    scrollbar_button_color=("white","#101014"),scrollbar_button_hover_color=("white","#101014"))
-        self.frame_center.grid(row=0, column=0 ,padx=15,pady=15,columnspan=2,sticky="nsew")
-
-        # ===================Frame Right=========================
-        self.frame_right = customtkinter.CTkScrollableFrame(master=self.app, width=215,height=520,fg_color="#1b1b1b")
-        self.frame_right.configure(corner_radius=20,
-                                   scrollbar_button_color=("white","#1b1b1b"),scrollbar_button_hover_color=("white","#1b1b1b"))
-        self.frame_right.grid(row=0, column=2,padx=15,pady=15,sticky="nsew")
-
-        # ===================Frame Center (All Frame) Components=========================
-
-        self.navbar= customtkinter.CTkFrame(self.frame_center,width=570,height=53,fg_color="#1b1b1b",corner_radius=20)
-        self.navbar.grid(row=0,column=0,pady=(0,10),padx=(0,0),sticky="nsew")
-        self.navbar.pack_propagate(0)
-
-        self.open = customtkinter.CTkButton(self.navbar,
-                                    image=customtkinter.CTkImage(light_image=Image.open('images/open-menu.png'),
-                                   dark_image=Image.open('images/open-menu.png'),size=(25,25)),
-                                   text="",command=lambda: self.gui_create_sidebar())
-        self.open.configure(fg_color="#1b1b1b", hover_color="gray5",width=40)
-        self.open.pack(side="left",pady=10,padx=10)
-
-        self.pc_name = customtkinter.CTkLabel(self.navbar,text=os.environ['COMPUTERNAME'],
-                                              font=customtkinter.CTkFont(family="Roboto", size=20,weight="bold"))
-        self.pc_name.pack(side="right",pady=10,padx=17)
-
-        self.gui_home()
-        
-
-
+    def gui_frame_right_home_settings(self):
         # ===================Frame Right Components=========================
-        self.heading = customtkinter.CTkLabel(self.frame_right,text="Activity Tracking",
+        self.frcontainer = customtkinter.CTkFrame(master=self.frame_right,fg_color="#1b1b1b")
+        self.frcontainer.grid(row=0, column=0,padx=0,pady=0,sticky="nsew")
+
+        self.heading = customtkinter.CTkLabel(self.frcontainer,text="Activity Tracking",
                                               font=customtkinter.CTkFont(family="Roboto", size=27,weight="bold"),
                                               justify="left",anchor="w")
         self.heading.grid(row=1,column=0,padx=2,sticky="nsew")
 
-        self.date_g = customtkinter.CTkLabel(self.frame_right,text=datetime.datetime.today().strftime("%A,%d %b"),font=("Roboto",13),anchor="w",justify="left")
+        self.date_g = customtkinter.CTkLabel(self.frcontainer,text=datetime.datetime.today().strftime("%A,%d %b"),font=("Roboto",13),anchor="w",justify="left")
         self.date_g.grid(row=2,column=0,padx=2,sticky="nsew")
 
-        self.frame_week = customtkinter.CTkFrame(master=self.frame_right,fg_color="#1b1b1b")
+        self.frame_week = customtkinter.CTkFrame(master=self.frcontainer,fg_color="#1b1b1b")
         self.frame_week.grid(row=3, column=0,padx=0,pady=5,sticky="nsew")
 
-        self.frame_week_tot = customtkinter.CTkFrame(master=self.frame_right,corner_radius=20,fg_color="#232323")
+        self.frame_week_tot = customtkinter.CTkFrame(master=self.frcontainer,corner_radius=20,fg_color="#232323")
         self.frame_week_tot.grid(row=4, column=0,padx=0,pady=5,sticky="nsew")
 
         self.tm = customtkinter.CTkLabel(self.frame_week_tot,image=customtkinter.CTkImage(light_image=Image.open('images/tot-time.png'),
@@ -401,7 +389,7 @@ class Activity:
         self.slider6.grid(row=2, column=6,pady=5,padx=17,sticky="nsew")
 
 
-        self.frame_week_all = customtkinter.CTkFrame(master=self.frame_right,corner_radius=20,fg_color="#252525")
+        self.frame_week_all = customtkinter.CTkFrame(master=self.frcontainer,corner_radius=20,fg_color="#252525")
         self.frame_week_all.grid(row=5, column=0,padx=0,pady=5,sticky="nsew")    
 
         self.ta = customtkinter.CTkLabel(self.frame_week_all,image=customtkinter.CTkImage(light_image=Image.open('images/tot-time.png'),
@@ -418,7 +406,56 @@ class Activity:
 
         # next add the battery percentage if laptop or add the average time spent on an app 
 
+        self.gui_time(b=True)
 
+    def guiLoop(self):
+        customtkinter.set_appearance_mode("system")
+        customtkinter.set_default_color_theme("dark-blue")
+        self.app = customtkinter.CTk(fg_color="#101014")
+        self.app.geometry("1000x520")
+        # https://dribbble.com/shots/19514541-Activity-Tracking-Dashboardcan take this as a example
+        self.app.grid_columnconfigure((0,1,2), weight=1)
+        self.app.grid_rowconfigure(0, weight=1)
+        self.app.title("Tracked")
+        self.app.resizable(False,False)
+
+        
+        # ===================Frame Center=========================
+        self.frame_center = customtkinter.CTkScrollableFrame(master=self.app, width=420,height=520,fg_color="#101014")
+        self.frame_center.configure(corner_radius=20,
+                                    scrollbar_button_color=("white","#101014"),scrollbar_button_hover_color=("white","#101014"))
+        self.frame_center.grid(row=0, column=0 ,padx=15,pady=15,columnspan=2,sticky="nsew")
+
+        # ===================Frame Right=========================
+        self.frame_right = customtkinter.CTkScrollableFrame(master=self.app, width=215,height=520,fg_color="#1b1b1b")
+        self.frame_right.configure(corner_radius=20,
+                                   scrollbar_button_color=("white","#1b1b1b"),scrollbar_button_hover_color=("white","#1b1b1b"))
+        self.frame_right.grid(row=0, column=2,padx=15,pady=15,sticky="nsew")
+
+        # ===================Frame Center (All Frame) Components=========================
+
+        self.navbar= customtkinter.CTkFrame(self.frame_center,width=570,height=53,fg_color="#1b1b1b",corner_radius=20)
+        self.navbar.grid(row=0,column=0,pady=(0,10),padx=(0,0),sticky="nsew")
+        self.navbar.pack_propagate(0)
+
+        self.open = customtkinter.CTkButton(self.navbar,
+                                    image=customtkinter.CTkImage(light_image=Image.open('images/open-menu.png'),
+                                   dark_image=Image.open('images/open-menu.png'),size=(25,25)),
+                                   text="",command=lambda: self.gui_create_sidebar())
+        self.open.configure(fg_color="#1b1b1b", hover_color="gray5",width=40)
+        self.open.pack(side="left",pady=10,padx=10)
+
+        self.page_name = customtkinter.CTkLabel(self.navbar,text="Home",
+                                              font=customtkinter.CTkFont(family="Roboto", size=20,weight="bold"))
+        self.page_name.pack(side="left",pady=10,padx=17)
+
+        self.pc_name = customtkinter.CTkLabel(self.navbar,text=os.environ['COMPUTERNAME'],
+                                              font=customtkinter.CTkFont(family="Roboto", size=20,weight="bold"))
+        self.pc_name.pack(side="right",pady=10,padx=17)
+
+        self.gui_home()
+        self.gui_frame_right_home_settings()
+        
 
         self.gui_done = True
         # self.app.protocol('WM_DELETE_WINDOW', self.hide_window)
