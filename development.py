@@ -102,14 +102,16 @@ class Activity:
         self.total_time_per_app = list(self.tm.items())
 
     def update_json(self,key,end_time,start_time):
+        start_time =str(start_time).split(" ")[1]
+        end_time =str(end_time).split(" ")[1]
         time = str(end_time-start_time).split(".")[0]
         st = int(time.split(":")[2])
         if st > 3 and key not in self.unwanted and "." in key and ".tmp" not in key:
             if key in self.tracked_before:
-                self.activities[self.today_date][key].insert(0,[str(start_time).split(".")[0],str(end_time).split(".")[0],time])
+                self.activities[self.today_date][key].insert(0,[start_time.split(".")[0],end_time.split(".")[0],time])
             elif key not in self.tracked_before:
                 self.tracked_before.append(key)
-                self.activities[self.today_date].update({key:[[str(start_time).split(".")[0],str(end_time).split(".")[0],time]]})
+                self.activities[self.today_date].update({key:[[start_time.split(".")[0],end_time.split(".")[0],time]]})
             
             jsonwr = open(self.fname,"w")
             json.dump(self.activities,jsonwr,indent=4)
@@ -308,9 +310,41 @@ class Activity:
         self.frcontainerd.grid(row=0, column=0,padx=0,pady=0,sticky="nsew")
 
         self.app_name = customtkinter.CTkLabel(self.frcontainerd,text=app,
-                                              font=customtkinter.CTkFont(family="Roboto", size=20,weight="bold"),
+                                              font=customtkinter.CTkFont(family="Roboto", size=27,weight="bold"),
                                               justify="left",anchor="w",wraplength=290)
-        self.app_name.grid(row=1,column=0,padx=2,sticky="nsew")
+        self.app_name.grid(row=0,column=0,padx=2,sticky="nsew",columnspan=3)
+        i=1
+        for s in self.activities:
+            if app in self.activities[s]:
+                self.Date = customtkinter.CTkLabel(self.frcontainerd,text=s,
+                                              font=customtkinter.CTkFont(family="Roboto", size=20,weight="bold"),
+                                              justify="left",anchor="w")
+                self.Date.grid(row=i,column=0,padx=2,pady=(17,5),sticky="nsew",columnspan=2)
+                self.entry = customtkinter.CTkEntry(self.frcontainerd,width=95,fg_color="#1b1b1b",text_color="white")
+                self.entry.grid(row=i+1,column=0)
+                self.entry.insert(customtkinter.END,"Start Time")
+                self.entry.configure(state="disabled")
+
+                self.entry = customtkinter.CTkEntry(self.frcontainerd,width=95,fg_color="#1b1b1b",text_color="white")
+                self.entry.grid(row=i+1,column=1)
+                self.entry.insert(customtkinter.END,"End Time")
+                self.entry.configure(state="disabled")
+
+                self.entry = customtkinter.CTkEntry(self.frcontainerd,width=95,fg_color="#1b1b1b",text_color="white")
+                self.entry.grid(row=i+1,column=2)
+                self.entry.insert(customtkinter.END,"Duration")
+                self.entry.configure(state="disabled")
+
+                i=i+2
+                for ts in self.activities[s][app]:
+                    for j in range(3):
+                        self.entry = customtkinter.CTkEntry(self.frcontainerd,width=95,fg_color="#1b1b1b",text_color="white")
+                        self.entry.grid(row=i,column=j)
+                        self.entry.insert(customtkinter.END,ts[j])
+                        self.entry.configure(state="disabled")
+                    i=i+1
+                
+                self.frame_right.configure(scrollbar_button_color=("gray55", "gray41"),scrollbar_button_hover_color=("gray40", "gray53"))
 
     def gui_settings(self):
         self.frame_left.destroy()
@@ -378,6 +412,7 @@ class Activity:
 
     def gui_frame_right_home_settings(self):
         # ===================Frame Right Components=========================
+        self.frame_right.configure(scrollbar_button_color=("white","#1b1b1b"),scrollbar_button_hover_color=("white","#1b1b1b"))
         self.frcontainer = customtkinter.CTkFrame(master=self.frame_right,fg_color="#1b1b1b")
         self.frcontainer.grid(row=0, column=0,padx=0,pady=0,sticky="nsew")
 
@@ -472,9 +507,8 @@ class Activity:
         self.app.grid_columnconfigure((0,1,2), weight=1)
         self.app.grid_rowconfigure(0, weight=1)
         self.app.title("Tracked")
-        self.app.resizable(False,False)
+        self.app.resizable(False,False)     
 
-        
         # ===================Frame Center=========================
         self.frame_center = customtkinter.CTkScrollableFrame(master=self.app, width=420,height=520,fg_color="#101014")
         self.frame_center.configure(corner_radius=20,
