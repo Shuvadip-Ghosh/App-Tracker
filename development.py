@@ -276,7 +276,7 @@ class Activity:
         # ===================Frame Center (Details) Components=========================
         self.frame_left.destroy()
         if self.active_frame != self.guiframes["details"]:
-            self.details = customtkinter.CTkFrame(self.frame_center,width=570,fg_color="#1b1b1b")
+            self.details = customtkinter.CTkFrame(self.frame_center,width=570,fg_color="#1b1b1b",corner_radius=20)
             self.details.grid(row=1,column=0,padx=0,pady=0,sticky="nsew")
 
             self.get_total_times()
@@ -306,15 +306,16 @@ class Activity:
             self.active_frame = self.guiframes["details"]
 
     def gui_details_right_frame(self,app):
-        self.frcontainerd = customtkinter.CTkFrame(master=self.frame_right,fg_color="#1b1b1b")
-        self.frcontainerd.grid(row=0, column=0,padx=0,pady=0,sticky="nsew")
-
-        self.app_name = customtkinter.CTkLabel(self.frcontainerd,text=app,
+        self.det = customtkinter.CTkLabel(self.frame_right,text="Details",
                                               font=customtkinter.CTkFont(family="Roboto", size=27,weight="bold"),
                                               justify="left",anchor="w",wraplength=290)
-        self.app_name.grid(row=0,column=0,padx=2,sticky="nsew",columnspan=3)
+        self.det.grid(row=0,column=0,padx=(16,19),pady=(16,0),sticky="nsew",columnspan=3)
+
+        self.frcontainerd = customtkinter.CTkScrollableFrame(master=self.frame_right, width=300,height=400,fg_color="#1b1b1b")
+        self.frcontainerd.grid(row=1, column=0,padx=(16,9),pady=(0,10),sticky="nsew")
+
         i=1
-        for s in self.activities:
+        for s in reversed(self.activities):
             if app in self.activities[s]:
                 self.Date = customtkinter.CTkLabel(self.frcontainerd,text=s,
                                               font=customtkinter.CTkFont(family="Roboto", size=20,weight="bold"),
@@ -344,8 +345,6 @@ class Activity:
                         self.entry.configure(state="disabled")
                     i=i+1
                 
-                self.frame_right.configure(scrollbar_button_color=("gray55", "gray41"),scrollbar_button_hover_color=("gray40", "gray53"))
-
     def gui_settings(self):
         self.frame_left.destroy()
         # ===================Frame Center (Settings) Components=========================
@@ -411,10 +410,12 @@ class Activity:
             self.active_frame = self.guiframes["settings"]
 
     def gui_frame_right_home_settings(self):
+        if self.active_frame == self.guiframes["details"]:
+            self.det.destroy()
+            self.frcontainerd.destroy()
         # ===================Frame Right Components=========================
-        self.frame_right.configure(scrollbar_button_color=("white","#1b1b1b"),scrollbar_button_hover_color=("white","#1b1b1b"))
         self.frcontainer = customtkinter.CTkFrame(master=self.frame_right,fg_color="#1b1b1b")
-        self.frcontainer.grid(row=0, column=0,padx=0,pady=0,sticky="nsew")
+        self.frcontainer.grid(row=0, column=0,padx=17,pady=(17,0),sticky="nsew")
 
         self.heading = customtkinter.CTkLabel(self.frcontainer,text="Activity Tracking",
                                               font=customtkinter.CTkFont(family="Roboto", size=27,weight="bold"),
@@ -516,10 +517,10 @@ class Activity:
         self.frame_center.grid(row=0, column=0 ,padx=15,pady=15,columnspan=2,sticky="nsew")
 
         # ===================Frame Right=========================
-        self.frame_right = customtkinter.CTkScrollableFrame(master=self.app, width=215,height=520,fg_color="#1b1b1b")
-        self.frame_right.configure(corner_radius=20,
-                                   scrollbar_button_color=("white","#1b1b1b"),scrollbar_button_hover_color=("white","#1b1b1b"))
+        self.frame_right = customtkinter.CTkFrame(master=self.app, width=265,height=520,fg_color="#1b1b1b")
+        self.frame_right.configure(corner_radius=20)
         self.frame_right.grid(row=0, column=2,padx=15,pady=15,sticky="nsew")
+        self.frame_right.grid_propagate(0)
 
         # ===================Frame Center (All Frame) Components=========================
 
