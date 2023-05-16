@@ -226,12 +226,24 @@ class Activity:
         self.frame_left.grid(row=0, column=0,padx=0,pady=15,sticky="nsw")
 
         # ===================Frame Left Components=========================
-        my_image = customtkinter.CTkImage(light_image=Image.open('images/logo.png'),
+        logo = customtkinter.CTkImage(light_image=Image.open('images/logo.png'),
                                    dark_image=Image.open('images/logo.png'),
-                                   size=(100,100)
+                                   size=(150,150)
                                    )
         cross = customtkinter.CTkImage(light_image=Image.open('images/close.png'),
                                    dark_image=Image.open('images/close.png'),
+                                   size=(20,20)
+                                   )
+        homel = customtkinter.CTkImage(light_image=Image.open('images/home.png'),
+                                   dark_image=Image.open('images/home.png'),
+                                   size=(20,20)
+                                   )
+        detl = customtkinter.CTkImage(light_image=Image.open('images/details.png'),
+                                   dark_image=Image.open('images/details.png'),
+                                   size=(20,20)
+                                   )
+        sett = customtkinter.CTkImage(light_image=Image.open('images/settings.png'),
+                                   dark_image=Image.open('images/settings.png'),
                                    size=(20,20)
                                    )
         self.tr = customtkinter.CTkLabel(self.frame_left,text="",width=190)
@@ -241,20 +253,20 @@ class Activity:
                                              hover=False,command=lambda: self.frame_left.destroy())
         self.close.grid(row=0,column=1,pady=0,padx=0,sticky="nsew")
 
-        self.logo = customtkinter.CTkLabel(self.frame_left,image=my_image,text="")
+        self.logo = customtkinter.CTkLabel(self.frame_left,image=logo,text="")
         self.logo.grid(row=1,column=0,pady=10,padx=5,sticky="nsew",columnspan=2)
 
 
-        self.home_nav = customtkinter.CTkButton(self.frame_left, text="Home",command=lambda: self.gui_home())
+        self.home_nav = customtkinter.CTkButton(self.frame_left,image=homel, text="Home",command=lambda: self.gui_home())
         self.home_nav.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center",width=200)
         self.home_nav.grid(row=2, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
 
-        self.detailed = customtkinter.CTkButton(self.frame_left, text="Details",command=lambda: self.gui_details())
+        self.detailed = customtkinter.CTkButton(self.frame_left,image=detl, text="Details",command=lambda: self.gui_details())
         self.detailed.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
         self.detailed.grid(row=3, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
 
-        self.settings_nav = customtkinter.CTkButton(self.frame_left, text="Settings",command=lambda: self.gui_settings())
-        self.settings_nav.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="center")
+        self.settings_nav = customtkinter.CTkButton(self.frame_left,image=sett,text="Settings",command=lambda: self.gui_settings())
+        self.settings_nav.configure(font=("Roboto",16), fg_color="#363636", hover_color="gray5",anchor="w")
         self.settings_nav.grid(row=4, column=0,pady=5,padx=10,sticky="nsew",columnspan=2)
 
     def gui_home(self):
@@ -280,7 +292,6 @@ class Activity:
             self.details.grid(row=1,column=0,padx=0,pady=0,sticky="nsew")
 
             self.get_total_times()
-
             for i,(app,time) in enumerate(reversed(self.total_time_per_app)):
                 self.ta = customtkinter.CTkLabel(self.details,text=app,
                                                     font=customtkinter.CTkFont(family="Roboto", size=20,weight="normal"),
@@ -299,7 +310,7 @@ class Activity:
                 self.con.configure(fg_color="#1b1b1b", hover_color="#1b1b1b",width=40)
                 self.con.grid(row=i,column=2,padx=(15,0),pady=(9,8))
 
-
+            self.gui_details_right_frame(app=self.total_time_per_app[len(self.total_time_per_app)-1][0])
             eval(self.active_frame).destroy()
             self.page_name.configure(text="Details")
             self.frcontainer.destroy()
@@ -507,6 +518,7 @@ class Activity:
         # https://dribbble.com/shots/19514541-Activity-Tracking-Dashboardcan take this as a example
         self.app.grid_columnconfigure((0,1,2), weight=1)
         self.app.grid_rowconfigure(0, weight=1)
+        self.app.iconbitmap("images/logo.ico")
         self.app.title("Tracked")
         self.app.resizable(False,False)     
 
