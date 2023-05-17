@@ -1,14 +1,18 @@
 import psutil
-import win32process, win32gui
-import datetime
 from pywinauto.application import Application
-import json
+from PIL import Image,ImageDraw
+import pystray
+
+import win32process, win32gui
+
 import customtkinter
+import datetime
+import json
 import threading
-from PIL import Image
 import time
 import os
 import getpass
+
 
 """
 brave.exe
@@ -29,10 +33,15 @@ class Activity:
             "details":"self.details",
             "settings":"self.settings"
         }
+        self.running=True
         self.today_date = str(datetime.datetime.now()).split(" ")[0]
         self.start_time = datetime.datetime.now()
         self.dates = [self.start_time + datetime.timedelta(days=i) for i in range(0 - self.start_time.weekday(), 7 - self.start_time.weekday())]
         self.gui_done = False
+
+        sttobj = open("settings.json","r")
+        self.settings_js = json.load(sttobj)
+        sttobj.close()
 
         jsonobj = open(self.fname,"r")
         self.activities = json.load(jsonobj)
@@ -46,14 +55,19 @@ class Activity:
 
         self.browsernames =["chrome.exe","msedge.exe","launcher.exe","firefox.exe"]
         self.unwanted = ["ONLINENT.EXE","SearchApp.exe","rundll32.exe","ShellExperienceHost.exe"]
-
+        
         self.get_total_times()
+        #  start the pystary thread next
+        # self.tray = threading.Thread(target=self.systray)
+        # self.setting_checker_thread = threading.Thread(target=self.setting_checker)
         self.gui_thread = threading.Thread(target=self.guiLoop)
-        self.gui_time_th = threading.Thread(target=self.gui_time,daemon=True)
+        self.gui_time_th = threading.Timer(30.0,self.gui_time)
 
         self.gui_thread.start()
         time.sleep(1)
+        # self.tray.start()
         self.gui_time_th.start() 
+        # self.setting_checker_thread.start()
         self.active_frame = self.guiframes["home"]
         # self.activity()
     
@@ -61,25 +75,58 @@ class Activity:
         # code to create shortcut using python and send it to the startup_folder
         startup_folder = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
 
-    def get_total_times(self):
-        self.tm = {}
-        t = datetime.timedelta(seconds=0,hours=0,minutes=0)
-        for s in self.activities:
-            for g in self.activities[s]:
-                time_tot= datetime.timedelta(seconds=0,hours=0,minutes=0)
-                for f in self.activities[s][g]:
-                    time_tot = time_tot+datetime.timedelta(hours=int(f[2].split(":")[0]),minutes=int(f[2].split(":")[1]),seconds=int(f[2].split(":")[2]))
-                if g in self.tm:
-                    self.tm[g].append(time_tot)
-                else:
-                    self.tm.update({g:[time_tot]})
-        for a in self.tm:
-            tt= datetime.timedelta(seconds=0,hours=0,minutes=0)
-            for ts in self.tm[a]:
-                tt =tt+ts
-            self.tm[a] = tt
-        self.tm = dict(sorted(self.tm.items(), key=lambda item: item[1]))
-        self.total_time_per_app = list(self.tm.items())
+    def window(self,op):
+        if op == "show":
+            self.showing = "Hide"
+            self.icon.update_menu()
+            self.app.after(0,self.app.deiconify())
+        elif op == "quit":
+            try:
+                self.running = False
+                self.app.destroy()
+                self.icon.stop()
+            except:
+                pass
+        elif op=="hide":
+            self.showing = "Show"
+            self.icon.update_menu()
+            self.app.withdraw()
+            print(op)
+
+    def systray(self):
+        image=Image.open("images/logo.ico")
+        if self.settings_js["start_min"]:
+            self.showing = "Show"
+            self.menu=(pystray.MenuItem('Quit', lambda: self.window("quit")), pystray.MenuItem(lambda text:self.showing, lambda: self.window("show")))
+        else:
+            self.showing = "Hide"
+            self.menu=(pystray.MenuItem('Quit', lambda: self.window("quit")), pystray.MenuItem(lambda text:self.showing, lambda: self.window("hide")))
+        self.icon=pystray.Icon("App Meter", image, "App Meter shortcut", self.menu)
+        self.icon.run()
+
+    def setting_checker(self):
+        while True:
+            if self.app.state == "normal" and self.settings_js["start_min"]:
+                self.app.withdraw()
+            if not self.running:
+                self.gui_time_th.cancel()
+
+    def settings_json_update(self,wid,v=""):
+        if wid == "min_win":
+            self.app.protocol('WM_DELETE_WINDOW', self.app.withdraw)
+            self.settings_js[wid] = self.min_win.get()
+        elif wid == "launch_startup":
+            self.settings_js[wid] = self.launch.get()
+        elif wid == "start_min":
+            # self.app.iconify()
+            self.settings_js[wid] = self.startmin.get()
+        else:
+            self.settings_js[wid] = v
+
+        
+        jsonwr = open("settings.json","w")
+        json.dump(self.settings_js,jsonwr,indent=4)
+        jsonwr.close()
 
     def get_total_times(self):
         self.tm = {}
@@ -144,7 +191,7 @@ class Activity:
         return url
     
     def activity(self):
-        while True:
+        while self.running:
             try:
                 pid,app_name = self.get_app_name()
                 if app_name in self.browsernames:
@@ -185,7 +232,7 @@ class Activity:
                 pass
     
     def gui_time(self, b=False):
-        while self.gui_done:
+        if self.gui_done:
             self.tlist = []
             tot = datetime.timedelta(seconds=0,hours=0,minutes=0)
             for i in self.dates:
@@ -215,9 +262,6 @@ class Activity:
                 if self.active_frame != self.guiframes["details"] or b == True:
                     for j,m in enumerate(self.tlist):
                         eval(f"self.slider{j}").set(0)
-            if b:
-                break
-            time.sleep(60)
     
     def gui_create_sidebar(self):
         # ===================Frame Left=========================
@@ -376,9 +420,12 @@ class Activity:
                                                 font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
                                                 justify="left",anchor="w",width=450)
             self.min_winl.grid(row=1,column=0,padx=(15,10),pady=(17,0))
-
-            self.min_win =  customtkinter.CTkSwitch(self.general, text="", onvalue="on", offvalue="off")
+            self.min_win =  customtkinter.CTkSwitch(self.general, text="", onvalue=True, offvalue=False,
+                                                    command=lambda:self.settings_json_update("min_win"))
             self.min_win.grid(row=1,column=1,padx=(15,0),pady=(17,0))
+            if self.settings_js["min_win"]:
+                self.min_win.select()
+
             self.updatea = customtkinter.CTkLabel(self.general,text="Update",
                                                 font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
                                                 justify="left",anchor="w",width=450)
@@ -403,16 +450,22 @@ class Activity:
                                                 justify="left",anchor="w",width=450)
             self.launchl.grid(row=1,column=0,padx=(15,10),pady=(17,0))
 
-            self.launch =  customtkinter.CTkSwitch(self.startup, text="", onvalue="on", offvalue="off")
+            self.launch =  customtkinter.CTkSwitch(self.startup, text="", onvalue=True, offvalue=False,
+                                                    command=lambda:self.settings_json_update("launch_startup"))
             self.launch.grid(row=1,column=1,padx=(15,0),pady=(17,0))
+            if self.settings_js["launch_startup"]:
+                self.launch.select()
 
             self.startminl = customtkinter.CTkLabel(self.startup,text="Start minimised",
                                                 font=customtkinter.CTkFont(family="Roboto", size=16,weight="normal"),
                                                 justify="left",anchor="w",width=450)
             self.startminl.grid(row=2,column=0,padx=(15,10),pady=(17,0))
 
-            self.startmin =  customtkinter.CTkSwitch(self.startup, text="", onvalue="on", offvalue="off")
+            self.startmin =  customtkinter.CTkSwitch(self.startup, text="", onvalue=True, offvalue=False,
+                                                    command=lambda:self.settings_json_update("start_min"))
             self.startmin.grid(row=2,column=1,padx=(15,0),pady=(17,0))
+            if self.settings_js["start_min"]:
+                self.startmin.select()
 
             eval(self.active_frame).destroy()
             self.page_name.configure(text="Settings")
@@ -508,7 +561,7 @@ class Activity:
 
         # next add the battery percentage if laptop or add the average time spent on an app 
 
-        self.gui_time(b=True)
+        self.gui_time()
 
     def guiLoop(self):
         customtkinter.set_appearance_mode("system")
@@ -519,7 +572,7 @@ class Activity:
         self.app.grid_columnconfigure((0,1,2), weight=1)
         self.app.grid_rowconfigure(0, weight=1)
         self.app.iconbitmap("images/logo.ico")
-        self.app.title("Tracked")
+        self.app.title("App Meter")
         self.app.resizable(False,False)     
 
         # ===================Frame Center=========================
@@ -560,7 +613,12 @@ class Activity:
         
 
         self.gui_done = True
-        # self.app.protocol('WM_DELETE_WINDOW', self.hide_window)
+        print(self.gui_done)
+        if self.settings_js["min_win"]:
+            self.app.protocol('WM_DELETE_WINDOW', self.app.withdraw)
+        if not self.settings_js["min_win"]:
+            self.app.protocol('WM_DELETE_WINDOW', lambda: self.window("quit"))
+
         self.app.mainloop()
 
 acti = Activity()
