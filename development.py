@@ -9,6 +9,7 @@ import customtkinter
 import datetime
 import json
 import threading
+from multiprocessing import Queue,Process
 import time
 import os
 import getpass
@@ -22,22 +23,20 @@ a_string = "chrome.exe something something"
 print(any([x in a_string for x in matches]))
 """
 
-class Activity:
-    def __init__(self) -> None:
+class GraphicalUserInterface:
+    def __init__(self,rnq) -> None:
         self.fname = "dev.json"
-        self.active_app = ""
-        self.active_url = ""
         self.active_frame = ""
         self.guiframes = {
             "home":"self.home",
             "details":"self.details",
             "settings":"self.settings"
         }
-        self.running=True
         self.today_date = str(datetime.datetime.now()).split(" ")[0]
         self.start_time = datetime.datetime.now()
         self.dates = [self.start_time + datetime.timedelta(days=i) for i in range(0 - self.start_time.weekday(), 7 - self.start_time.weekday())]
         self.gui_done = False
+        self.running=rnq
 
         sttobj = open("settings.json","r")
         self.settings_js = json.load(sttobj)
@@ -46,30 +45,26 @@ class Activity:
         jsonobj = open(self.fname,"r")
         self.activities = json.load(jsonobj)
         jsonobj.close()
-        self.tracked_before = []
-        if self.today_date in self.activities:
-            for apps in self.activities[self.today_date]:
-                self.tracked_before.append(apps)
-        else:
-            self.activities.update({self.today_date:{}})
-
-        self.browsernames =["chrome.exe","msedge.exe","launcher.exe","firefox.exe"]
-        self.unwanted = ["ONLINENT.EXE","SearchApp.exe","rundll32.exe","ShellExperienceHost.exe"]
         
         self.get_total_times()
-        #  start the pystary thread next
-        # self.tray = threading.Thread(target=self.systray)
-        # self.setting_checker_thread = threading.Thread(target=self.setting_checker)
-        self.gui_thread = threading.Thread(target=self.guiLoop)
+        self.setting_checker_thread = threading.Timer(5.0,self.setting_checker)
         self.gui_time_th = threading.Timer(30.0,self.gui_time)
+        self.gui_thread = threading.Thread(target=self.guiLoop)
+        self.tray = threading.Thread(target=self.systray)
 
         self.gui_thread.start()
+        self.tray.start()
         time.sleep(1)
-        # self.tray.start()
+        self.setting_checker()
+        self.gui_time()
         self.gui_time_th.start() 
-        # self.setting_checker_thread.start()
+        self.setting_checker_thread.start()
         self.active_frame = self.guiframes["home"]
-        # self.activity()
+    
+    def get_activities(self):
+        jsonobj = open(self.fname,"r")
+        self.activities = json.load(jsonobj)
+        jsonobj.close()
     
     def add_to_startup(self):
         # code to create shortcut using python and send it to the startup_folder
@@ -77,39 +72,47 @@ class Activity:
 
     def window(self,op):
         if op == "show":
-            self.showing = "Hide"
-            self.icon.update_menu()
-            self.app.after(0,self.app.deiconify())
+            try:
+                self.showing = "Hide"
+                self.icon.update_menu()
+                self.app.after(0,self.app.deiconify())
+            except:
+                pass
         elif op == "quit":
             try:
                 self.running = False
+                self.gui_time_th.cancel()
+                self.setting_checker_thread.cancel()
                 self.app.destroy()
                 self.icon.stop()
             except:
                 pass
         elif op=="hide":
-            self.showing = "Show"
-            self.icon.update_menu()
-            self.app.withdraw()
-            print(op)
+            try:
+                self.app.withdraw()
+                self.showing = "Show"
+                self.icon.update_menu()
+            except:
+                pass
 
     def systray(self):
         image=Image.open("images/logo.ico")
         if self.settings_js["start_min"]:
             self.showing = "Show"
-            self.menu=(pystray.MenuItem('Quit', lambda: self.window("quit")), pystray.MenuItem(lambda text:self.showing, lambda: self.window("show")))
+            self.menu=(pystray.MenuItem('Quit', lambda: self.window("quit")), 
+                       pystray.MenuItem(lambda text:self.showing, lambda: self.window(self.showing.lower())))
         else:
             self.showing = "Hide"
-            self.menu=(pystray.MenuItem('Quit', lambda: self.window("quit")), pystray.MenuItem(lambda text:self.showing, lambda: self.window("hide")))
+            self.menu=(pystray.MenuItem('Quit', lambda: self.window("quit")),
+                       pystray.MenuItem(lambda text:self.showing, lambda: self.window(self.showing.lower())))
         self.icon=pystray.Icon("App Meter", image, "App Meter shortcut", self.menu)
         self.icon.run()
 
     def setting_checker(self):
-        while True:
-            if self.app.state == "normal" and self.settings_js["start_min"]:
-                self.app.withdraw()
-            if not self.running:
-                self.gui_time_th.cancel()
+        if self.app.state() == "normal" and self.settings_js["start_min"]:
+            self.window("hide")
+        if not self.running:
+            self.gui_time_th.cancel()
 
     def settings_json_update(self,wid,v=""):
         if wid == "min_win":
@@ -129,6 +132,7 @@ class Activity:
         jsonwr.close()
 
     def get_total_times(self):
+        self.get_activities()
         self.tm = {}
         t = datetime.timedelta(seconds=0,hours=0,minutes=0)
         for s in self.activities:
@@ -148,91 +152,9 @@ class Activity:
         self.tm = dict(sorted(self.tm.items(), key=lambda item: item[1]))
         self.total_time_per_app = list(self.tm.items())
 
-    def update_json(self,key,end_time,start_time):
-        start_time =str(start_time).split(" ")[1]
-        end_time =str(end_time).split(" ")[1]
-        time = str(end_time-start_time).split(".")[0]
-        st = int(time.split(":")[2])
-        if st > 3 and key not in self.unwanted and "." in key and ".tmp" not in key:
-            if key in self.tracked_before:
-                self.activities[self.today_date][key].insert(0,[start_time.split(".")[0],end_time.split(".")[0],time])
-            elif key not in self.tracked_before:
-                self.tracked_before.append(key)
-                self.activities[self.today_date].update({key:[[start_time.split(".")[0],end_time.split(".")[0],time]]})
-            
-            jsonwr = open(self.fname,"w")
-            json.dump(self.activities,jsonwr,indent=4)
-            jsonwr.close()
-            print(key)
-            print(time)
-
-    def get_app_name(self):
-        hwnd = win32gui.GetForegroundWindow()
-        _,pid = win32process.GetWindowThreadProcessId(hwnd)
-        process = psutil.Process(pid)
-        process_name = process.name()
-        return pid,process_name
-
-    def get_url(self,pid,appname):
-        app = Application(backend="uia").connect(process=pid, time_out=10)
-        dlg = app.top_window()
-
-        if appname == self.browsernames[0]:
-            url = dlg.child_window(title="Address and search bar", control_type="Edit").get_value().split("/")[0]
-        elif appname == self.browsernames[1]:
-            wrapper = dlg.child_window(title="App bar", control_type="ToolBar")
-            url = wrapper.descendants(control_type='Edit')[0].get_value()
-        elif appname == self.browsernames[2]:
-            url = dlg.child_window(title="Address field", control_type="Edit").get_value()
-        elif appname == self.browsernames[3]:
-            url = dlg.child_window(title="Search with Google or enter address", auto_id="urlbar-input", control_type="Edit").get_value()
-        url = url.replace("https://","")
-        url = url.split("/")[0]
-        return url
-    
-    def activity(self):
-        while self.running:
-            try:
-                pid,app_name = self.get_app_name()
-                if app_name in self.browsernames:
-                    url = self.get_url(pid,app_name)
-                    if self.active_url == "":
-                        self.active_url == url
-                    elif self.active_app not in self.browsernames:
-                        self.end_time = datetime.datetime.now()
-                        self.update_json(self.active_app, self.end_time,self.start_time)
-                        self.active_app = app_name
-                        self.start_time = datetime.datetime.now()
-                    elif self.active_url != url:
-                        self.end_time = datetime.datetime.now()
-                        self.update_json(self.active_url, self.end_time,self.start_time)
-                        self.start_time = datetime.datetime.now()
-                    self.active_url = url
-
-                if app_name not in self.browsernames :
-                    if self.active_app == "":
-                        self.active_app = app_name
-                    elif self.active_app in self.browsernames:
-                        self.end_time = datetime.datetime.now()
-                        self.update_json(self.active_url, self.end_time,self.start_time)
-                        self.start_time = datetime.datetime.now()
-                    elif self.active_app != app_name :
-                        self.end_time = datetime.datetime.now()
-                        self.update_json(self.active_app, self.end_time,self.start_time)
-                        self.start_time = datetime.datetime.now()
-                    self.active_app = app_name
-            except KeyboardInterrupt:
-                self.end_time = datetime.datetime.now()
-                if self.active_app in self.browsernames:
-                    self.update_json(self.active_url, self.end_time,self.start_time)
-                else:
-                    self.update_json(self.active_app, self.end_time,self.start_time)
-                break
-            except Exception as e:
-                pass
-    
     def gui_time(self, b=False):
-        if self.gui_done:
+        if self.gui_done and self.running:
+            self.get_activities()
             self.tlist = []
             tot = datetime.timedelta(seconds=0,hours=0,minutes=0)
             for i in self.dates:
@@ -361,6 +283,7 @@ class Activity:
             self.active_frame = self.guiframes["details"]
 
     def gui_details_right_frame(self,app):
+        self.get_activities()
         self.det = customtkinter.CTkLabel(self.frame_right,text="Details",
                                               font=customtkinter.CTkFont(family="Roboto", size=27,weight="bold"),
                                               justify="left",anchor="w",wraplength=290)
@@ -613,12 +536,144 @@ class Activity:
         
 
         self.gui_done = True
-        print(self.gui_done)
         if self.settings_js["min_win"]:
-            self.app.protocol('WM_DELETE_WINDOW', self.app.withdraw)
+            self.app.protocol('WM_DELETE_WINDOW', lambda: self.window("hide"))
         if not self.settings_js["min_win"]:
             self.app.protocol('WM_DELETE_WINDOW', lambda: self.window("quit"))
 
         self.app.mainloop()
 
-acti = Activity()
+
+class Activity:
+    def __init__(self,queue) -> None:
+        self.fname = "dev.json"
+        self.active_app = ""
+        self.active_url = ""
+        self.today_date = str(datetime.datetime.now()).split(" ")[0]
+        self.start_time = datetime.datetime.now()
+        # self.running=rnqueue
+
+        jsonobj = open(self.fname,"r")
+        self.activities = json.load(jsonobj)
+        jsonobj.close()
+        self.tracked_before = []
+        if self.today_date in self.activities:
+            for apps in self.activities[self.today_date]:
+                self.tracked_before.append(apps)
+        else:
+            self.activities.update({self.today_date:{}})
+
+        self.browsernames =["chrome.exe","msedge.exe","launcher.exe","firefox.exe"]
+        self.unwanted = ["ONLINENT.EXE","SearchApp.exe","rundll32.exe","ShellExperienceHost.exe","python.exe"]
+        self.activity(queue)
+    
+    
+    def update_json(self,key,end_time,start_time):
+        time = str(end_time-start_time).split(".")[0]
+        start_time =str(start_time).split(" ")[1]
+        end_time =str(end_time).split(" ")[1]
+        st = int(time.split(":")[2])
+        if st > 3 and key not in self.unwanted and "." in key and ".tmp" not in key:
+            if key in self.tracked_before:
+                self.activities[self.today_date][key].insert(0,[start_time.split(".")[0],end_time.split(".")[0],time])
+            elif key not in self.tracked_before:
+                self.tracked_before.append(key)
+                self.activities[self.today_date].update({key:[[start_time.split(".")[0],end_time.split(".")[0],time]]})
+            
+            jsonwr = open(self.fname,"w")
+            json.dump(self.activities,jsonwr,indent=4)
+            jsonwr.close()
+            print(key)
+            print(time)
+
+    def get_app_name(self):
+        hwnd = win32gui.GetForegroundWindow()
+        _,pid = win32process.GetWindowThreadProcessId(hwnd)
+        process = psutil.Process(pid)
+        process_name = process.name()
+        return pid,process_name
+
+    def get_url(self,pid,appname):
+        app = Application(backend="uia").connect(process=pid, time_out=10)
+        dlg = app.top_window()
+
+        if appname == self.browsernames[0]:
+            url = dlg.child_window(title="Address and search bar", control_type="Edit").get_value().split("/")[0]
+        elif appname == self.browsernames[1]:
+            wrapper = dlg.child_window(title="App bar", control_type="ToolBar")
+            url = wrapper.descendants(control_type='Edit')[0].get_value()
+        elif appname == self.browsernames[2]:
+            url = dlg.child_window(title="Address field", control_type="Edit").get_value()
+        elif appname == self.browsernames[3]:
+            url = dlg.child_window(title="Search with Google or enter address", auto_id="urlbar-input", control_type="Edit").get_value()
+        url = url.replace("https://","")
+        url = url.split("/")[0]
+        return url
+    
+    def activity(self,queue):
+        while queue.empty() or queue.get():
+            try:
+                pid,app_name = self.get_app_name()
+                if app_name in self.browsernames:
+                    url = self.get_url(pid,app_name)
+                    if self.active_url == "":
+                        self.active_url == url
+                    elif self.active_app not in self.browsernames:
+                        self.end_time = datetime.datetime.now()
+                        self.update_json(self.active_app, self.end_time,self.start_time)
+                        self.active_app = app_name
+                        self.start_time = datetime.datetime.now()
+                    elif self.active_url != url:
+                        self.end_time = datetime.datetime.now()
+                        self.update_json(self.active_url, self.end_time,self.start_time)
+                        self.start_time = datetime.datetime.now()
+                    self.active_url = url
+
+                if app_name not in self.browsernames :
+                    if self.active_app == "":
+                        self.active_app = app_name
+                    elif self.active_app in self.browsernames:
+                        self.end_time = datetime.datetime.now()
+                        self.update_json(self.active_url, self.end_time,self.start_time)
+                        self.start_time = datetime.datetime.now()
+                    elif self.active_app != app_name :
+                        self.end_time = datetime.datetime.now()
+                        print(self.active_app)
+                        print(self.end_time-self.start_time)
+                        self.update_json(self.active_app, self.end_time,self.start_time)
+                        self.start_time = datetime.datetime.now()
+                    self.active_app = app_name
+
+            except KeyboardInterrupt:
+                self.end_time = datetime.datetime.now()
+                if self.active_app in self.browsernames:
+                    self.update_json(self.active_url, self.end_time,self.start_time)
+                else:
+                    self.update_json(self.active_app, self.end_time,self.start_time)
+                break
+            except Exception as e:
+                pass
+
+
+def tkinter_app(running_queue):
+    app = GraphicalUserInterface(running_queue)
+
+def track(running_queue):
+    acti = Activity(running_queue)
+
+if __name__ == "__main__":
+    running_queue = Queue()
+
+    # Set the running state to True
+    running_queue.put(True)
+
+    tkinter_process = Process(target=tkinter_app, args=(running_queue,))
+    while_loop_process = Process(target=track, args=(running_queue,))
+
+    tkinter_process.start()
+    while_loop_process.start()
+
+    tkinter_process.join()
+    # Set the running state to False to terminate the while loop
+    running_queue.put(False)
+    while_loop_process.join()
