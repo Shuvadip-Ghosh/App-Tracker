@@ -60,6 +60,11 @@ class GraphicalUserInterface:
         self.gui_time_th.start() 
         self.setting_checker_thread.start()
         self.active_frame = self.guiframes["home"]
+        # while True:
+        #     for thread in threading.enumerate():
+        #         print(thread.name)
+        #     time.sleep(4)
+
     
     def get_activities(self):
         jsonobj = open(self.fname,"r")
@@ -82,11 +87,16 @@ class GraphicalUserInterface:
             try:
                 self.running = False
                 self.gui_time_th.cancel()
-                self.setting_checker_thread.cancel()
-                self.app.destroy()
+                print("time")
                 self.icon.stop()
-            except:
-                pass
+                print("icon")
+                self.setting_checker_thread.cancel()
+                print("setting")
+                self.app.quit()
+                self.app.destroy()
+                print("app")
+            except Exception as e:
+                print(e)
         elif op=="hide":
             try:
                 self.app.withdraw()
@@ -109,10 +119,13 @@ class GraphicalUserInterface:
         self.icon.run()
 
     def setting_checker(self):
+        print("here")
         if self.app.state() == "normal" and self.settings_js["start_min"]:
             self.window("hide")
-        if not self.running:
-            self.gui_time_th.cancel()
+        if self.running == False:
+            self.window("quit")
+        # if not self.running:
+        #     self.gui_time_th.cancel()
 
     def settings_json_update(self,wid,v=""):
         if wid == "min_win":
@@ -167,13 +180,15 @@ class GraphicalUserInterface:
                     self.tlist.append(time_tot.seconds)
                 elif i.strftime("%Y-%m-%d") not in self.activities:
                     self.tlist.append(0)
-
+            
             t = datetime.timedelta(seconds=0,hours=0,minutes=0)
             for s in self.activities:
                 for g in self.activities[s]:
                     for f in self.activities[s][g]:
                         t = t+datetime.timedelta(hours=int(f[2].split(":")[0]),minutes=int(f[2].split(":")[1]),seconds=int(f[2].split(":")[2]))
-
+            # print(t)
+            # print(tot)
+            # print(self.tlist)
             try:
                 self.tot_time_all.configure(text=f"{str(t).split(':')[0]}h {str(t).split(':')[1]}m")
                 handm = str(datetime.timedelta(seconds=tot.seconds)).split(":")
@@ -542,6 +557,7 @@ class GraphicalUserInterface:
             self.app.protocol('WM_DELETE_WINDOW', lambda: self.window("quit"))
 
         self.app.mainloop()
+        # self.running = False
 
 
 class Activity:
@@ -638,8 +654,6 @@ class Activity:
                         self.start_time = datetime.datetime.now()
                     elif self.active_app != app_name :
                         self.end_time = datetime.datetime.now()
-                        print(self.active_app)
-                        print(self.end_time-self.start_time)
                         self.update_json(self.active_app, self.end_time,self.start_time)
                         self.start_time = datetime.datetime.now()
                     self.active_app = app_name
@@ -668,12 +682,12 @@ if __name__ == "__main__":
     running_queue.put(True)
 
     tkinter_process = Process(target=tkinter_app, args=(running_queue,))
-    while_loop_process = Process(target=track, args=(running_queue,))
+    # while_loop_process = Process(target=track, args=(running_queue,))
 
     tkinter_process.start()
-    while_loop_process.start()
+    # while_loop_process.start()
 
     tkinter_process.join()
     # Set the running state to False to terminate the while loop
     running_queue.put(False)
-    while_loop_process.join()
+    # while_loop_process.join()
