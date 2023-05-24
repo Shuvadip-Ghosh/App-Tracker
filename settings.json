@@ -1,6 +1,6 @@
 {
     "min_win": false,
-    "launch_startup": true,
+    "launch_startup": false,
     "start_min": true,
-    "added_to_startup_folder": false
+    "added_to_startup_folder": true
 }

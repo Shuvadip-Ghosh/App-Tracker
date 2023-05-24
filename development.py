@@ -2,7 +2,7 @@ import psutil # pip install psutil
 from pywinauto.application import Application # pip install pywinauto
 from PIL import Image # pip install pillow
 import pystray # pip install pystary
-import winapps #pip install winapps
+import win32com.client # pip install pywin32
 
 import win32process, win32gui
 
@@ -13,6 +13,7 @@ import threading
 from multiprocessing import Queue,Process
 import time
 import os
+import sys
 import getpass
 
 
@@ -70,15 +71,26 @@ class GraphicalUserInterface:
         jsonobj.close()
     
     def add_to_startup(self):
-        startup_folder = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+        startup_folder_file = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\App Meter.lnk"
         # code to create shortcut using python and send it to the startup_folder
+
+        shell = win32com.client.Dispatch("WScript.Shell")
+        shortcut = shell.CreateShortcut(startup_folder_file)
+        shortcut.TargetPath = os.path.join(os.getcwd(),f"{os.path.basename(sys.argv[0])}")
+        logo_path = os.path.join(os.getcwd(),"images\\logo.ico")
+        shortcut.IconLocation = f"{logo_path},{0}"
+        shortcut.Save()
 
         self.settings_js["added_to_startup_folder"] = True
         self.settings_json_update("update")
 
     def remove_from_startup(self):
-        startup_folder = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+        startup_folder_file = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\App Meter.lnk"
         # code to remove shortcut from startup_folder using python 
+        try:
+            os.remove(startup_folder_file)
+        except OSError as e:
+            pass
 
         self.settings_js["added_to_startup_folder"] = False
         self.settings_json_update("update")
@@ -129,6 +141,12 @@ class GraphicalUserInterface:
     def setting_checker(self):
         if self.app.state() == "normal" and self.settings_js["start_min"] and self.first_time:
             self.window("hide")
+
+        if self.settings_js["launch_startup"] and not self.settings_js["added_to_startup_folder"]:
+            self.add_to_startup()
+
+        if not self.settings_js["launch_startup"] and self.settings_js["added_to_startup_folder"]:
+            self.remove_from_startup()()
 
         if self.first_time:
             self.first_time=False
