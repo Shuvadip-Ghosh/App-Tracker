@@ -1,7 +1,8 @@
-import psutil
-from pywinauto.application import Application
-from PIL import Image,ImageDraw
-import pystray
+import psutil # pip install psutil
+from pywinauto.application import Application # pip install pywinauto
+from PIL import Image # pip install pillow
+import pystray # pip install pystary
+import winapps #pip install winapps
 
 import win32process, win32gui
 
@@ -26,6 +27,7 @@ print(any([x in a_string for x in matches]))
 class GraphicalUserInterface:
     def __init__(self,rnq) -> None:
         self.fname = "dev.json"
+        self.first_time = True
         self.active_frame = ""
         self.guiframes = {
             "home":"self.home",
@@ -47,8 +49,6 @@ class GraphicalUserInterface:
         jsonobj.close()
         
         self.get_total_times()
-        self.setting_checker_thread = threading.Timer(5.0,self.setting_checker)
-        self.gui_time_th = threading.Timer(30.0,self.gui_time)
         self.gui_thread = threading.Thread(target=self.guiLoop)
         self.tray = threading.Thread(target=self.systray)
 
@@ -57,8 +57,6 @@ class GraphicalUserInterface:
         time.sleep(1)
         self.setting_checker()
         self.gui_time()
-        self.gui_time_th.start() 
-        self.setting_checker_thread.start()
         self.active_frame = self.guiframes["home"]
         # while True:
         #     for thread in threading.enumerate():
@@ -73,6 +71,10 @@ class GraphicalUserInterface:
     
     def add_to_startup(self):
         # code to create shortcut using python and send it to the startup_folder
+        startup_folder = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+
+    def remove_from_startup(self):
+        # code to remove shortcut from startup_folder using python 
         startup_folder = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
 
     def window(self,op):
@@ -119,22 +121,35 @@ class GraphicalUserInterface:
         self.icon.run()
 
     def setting_checker(self):
-        print("here")
-        if self.app.state() == "normal" and self.settings_js["start_min"]:
+        if self.app.state() == "normal" and self.settings_js["start_min"] and self.first_time:
             self.window("hide")
+
+        if self.first_time:
+            self.first_time=False
+
         if self.running == False:
             self.window("quit")
-        # if not self.running:
-        #     self.gui_time_th.cancel()
+        
+        if self.running:
+            self.setting_checker_thread = threading.Timer(5.0,self.setting_checker)
+            self.setting_checker_thread.start()
 
     def settings_json_update(self,wid,v=""):
         if wid == "min_win":
-            self.app.protocol('WM_DELETE_WINDOW', self.app.withdraw)
+            if self.min_win.get():
+                self.app.after(0,self.app.wm_protocol('WM_DELETE_WINDOW', lambda:self.window("hide")))
+            if not self.min_win.get():
+                self.app.after(0,self.app.wm_protocol('WM_DELETE_WINDOW', lambda:self.window("quit")))
             self.settings_js[wid] = self.min_win.get()
+
         elif wid == "launch_startup":
+            if self.launch.get() and not self.settings_js["added_to_startup_folder"]:
+                self.add_to_startup()
+            elif not self.launch.get() and self.settings_js["added_to_startup_folder"]:
+                self.remove_from_startup()
             self.settings_js[wid] = self.launch.get()
+
         elif wid == "start_min":
-            # self.app.iconify()
             self.settings_js[wid] = self.startmin.get()
         else:
             self.settings_js[wid] = v
@@ -199,6 +214,9 @@ class GraphicalUserInterface:
                 if self.active_frame != self.guiframes["details"] or b == True:
                     for j,m in enumerate(self.tlist):
                         eval(f"self.slider{j}").set(0)
+            
+            self.gui_time_th = threading.Timer(30.0,self.gui_time)
+            self.gui_time_th.start()
     
     def gui_create_sidebar(self):
         # ===================Frame Left=========================
@@ -304,8 +322,13 @@ class GraphicalUserInterface:
                                               justify="left",anchor="w",wraplength=290)
         self.det.grid(row=0,column=0,padx=(16,19),pady=(16,0),sticky="nsew",columnspan=3)
 
+        self.app_name = customtkinter.CTkLabel(self.frame_right,text=app,
+                                              font=customtkinter.CTkFont(family="Roboto", size=12,weight="bold"),
+                                              justify="left",anchor="w",wraplength=290)
+        self.app_name.grid(row=1,column=0,padx=(16,19),pady=(4,0),sticky="nsew",columnspan=3)
+
         self.frcontainerd = customtkinter.CTkScrollableFrame(master=self.frame_right, width=300,height=400,fg_color="#1b1b1b")
-        self.frcontainerd.grid(row=1, column=0,padx=(16,9),pady=(0,10),sticky="nsew")
+        self.frcontainerd.grid(row=2, column=0,padx=(16,9),pady=(0,10),sticky="nsew")
 
         i=1
         for s in reversed(self.activities):
