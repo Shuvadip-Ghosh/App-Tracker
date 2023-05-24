@@ -70,12 +70,18 @@ class GraphicalUserInterface:
         jsonobj.close()
     
     def add_to_startup(self):
-        # code to create shortcut using python and send it to the startup_folder
         startup_folder = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+        # code to create shortcut using python and send it to the startup_folder
+
+        self.settings_js["added_to_startup_folder"] = True
+        self.settings_json_update("update")
 
     def remove_from_startup(self):
-        # code to remove shortcut from startup_folder using python 
         startup_folder = f"C:\\Users\\{getpass.getuser()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+        # code to remove shortcut from startup_folder using python 
+
+        self.settings_js["added_to_startup_folder"] = False
+        self.settings_json_update("update")
 
     def window(self,op):
         if op == "show":
@@ -151,8 +157,9 @@ class GraphicalUserInterface:
 
         elif wid == "start_min":
             self.settings_js[wid] = self.startmin.get()
+        
         else:
-            self.settings_js[wid] = v
+            pass
 
         
         jsonwr = open("settings.json","w")
