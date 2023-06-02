@@ -26,8 +26,8 @@ print(any([x in a_string for x in matches]))
 """
 
 class GraphicalUserInterface:
-    def __init__(self,rnq) -> None:
-        self.fname = "dev.json"
+    def __init__(self,rnq,fname) -> None:
+        self.fname = fname
         self.first_time = True
         self.active_frame = ""
         self.guiframes = {
@@ -41,24 +41,26 @@ class GraphicalUserInterface:
         self.gui_done = False
         self.running=rnq
 
-        sttobj = open("settings.json","r")
+        sttobj = open("data/settings.json","r")
         self.settings_js = json.load(sttobj)
         sttobj.close()
 
         jsonobj = open(self.fname,"r")
         self.activities = json.load(jsonobj)
         jsonobj.close()
-        
-        self.get_total_times()
+    
+    def start(self):
         self.gui_thread = threading.Thread(target=self.guiLoop)
         self.tray = threading.Thread(target=self.systray)
 
         self.gui_thread.start()
         self.tray.start()
         time.sleep(1)
+        self.get_total_times()
         self.setting_checker()
         self.gui_time()
         self.active_frame = self.guiframes["home"]
+        
         # while True:
         #     for thread in threading.enumerate():
         #         print(thread.name)
@@ -180,7 +182,7 @@ class GraphicalUserInterface:
             pass
 
         
-        jsonwr = open("settings.json","w")
+        jsonwr = open("data/settings.json","w")
         json.dump(self.settings_js,jsonwr,indent=4)
         jsonwr.close()
 
@@ -609,8 +611,8 @@ class GraphicalUserInterface:
 
 
 class Activity:
-    def __init__(self,queue) -> None:
-        self.fname = "dev.json"
+    def __init__(self,fname) -> None:
+        self.fname = fname
         self.active_app = ""
         self.active_url = ""
         self.today_date = str(datetime.datetime.now()).split(" ")[0]
@@ -629,9 +631,8 @@ class Activity:
 
         self.browsernames =["chrome.exe","msedge.exe","launcher.exe","firefox.exe"]
         self.unwanted = ["ONLINENT.EXE","SearchApp.exe","rundll32.exe","ShellExperienceHost.exe","python.exe"]
-        self.activity(queue)
-    
-    
+        # self.activity(queue)
+
     def update_json(self,key,end_time,start_time):
         time = str(end_time-start_time).split(".")[0]
         start_time =str(start_time).split(" ")[1]
@@ -717,20 +718,29 @@ class Activity:
                 pass
 
 
-def tkinter_app(running_queue):
-    app = GraphicalUserInterface(running_queue)
+def tkinter_app(running_queue,fname):
+    app = GraphicalUserInterface(running_queue,fname)
+    app.start()
 
-def track(running_queue):
-    acti = Activity(running_queue)
+def track(running_queue,fname):
+    acti = Activity(fname)
+    acti.activity(running_queue)
 
 if __name__ == "__main__":
+    s =str(datetime.datetime.now()).split(" ")[0]
+    fname = "data/activities-"+s.split("-")[0] + "-" + s.split("-")[1]+".json"
+    if not any(map(lambda x: x == fname, os.listdir("data/"))):
+        jsonwr = open(fname,"w")
+        json.dump({},jsonwr,indent=4)
+        jsonwr.close()
+
     running_queue = Queue()
 
     # Set the running state to True
     running_queue.put(True)
 
-    tkinter_process = Process(target=tkinter_app, args=(running_queue,))
-    # while_loop_process = Process(target=track, args=(running_queue,))
+    tkinter_process = Process(target=tkinter_app, args=(running_queue,fname))
+    # while_loop_process = Process(target=track, args=(running_queue,fname))
 
     tkinter_process.start()
     # while_loop_process.start()
