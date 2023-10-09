@@ -734,6 +734,8 @@ if __name__ == "__main__":
         json.dump({},jsonwr,indent=4)
         jsonwr.close()
 
+    fname = "dev.json"
+
     running_queue = Queue()
 
     # Set the running state to True
